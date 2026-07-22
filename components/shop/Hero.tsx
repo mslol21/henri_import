@@ -25,9 +25,13 @@ export function Hero() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-7 space-y-6 text-center lg:text-left"
           >
-            {/* Pill Tag */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 text-xs font-semibold text-purple-300 backdrop-blur-xs">
-              <Sparkles className="h-4 w-4 text-purple-400" />
+            {/* Pill Tag with Mascot Avatar */}
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 text-xs font-semibold text-purple-300 backdrop-blur-xs">
+              <img
+                src="/mascote.png"
+                alt="Mascote Henri Imports"
+                className="h-6 w-6 object-contain rounded-full bg-purple-900/50 p-0.5"
+              />
               <span>LOJA OFICIAL HENRI IMPORTS • TECNOLOGIA & SOFISTICAÇÃO</span>
             </div>
 
@@ -100,14 +104,27 @@ export function Hero() {
             </div>
           </motion.div>
 
-          {/* Right Hero Image Card */}
+          {/* Right Hero Image Card with Mascot floating badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-5 relative"
           >
-            <div className="relative mx-auto max-w-md lg:max-w-none overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-800/50 shadow-2xl backdrop-blur-md group">
+            {/* Mascot Floating Badge */}
+            <div className="absolute -top-6 -left-6 z-20 flex items-center gap-2 rounded-2xl bg-slate-900/90 border border-purple-500/40 p-2.5 shadow-2xl backdrop-blur-md">
+              <img
+                src="/mascote.png"
+                alt="Mascote Henri Imports"
+                className="h-10 w-10 object-contain drop-shadow-md animate-bounce"
+              />
+              <div className="text-left pr-2">
+                <span className="text-[10px] font-black uppercase text-purple-400 block">HENRI MASCOTE</span>
+                <span className="text-xs font-bold text-white">100% Autêntico</span>
+              </div>
+            </div>
+
+            <div className="relative mx-auto max-w-md lg:max-w-none overflow-hidden rounded-3xl border border-slate-700/50 bg-slate-800/50 shadow-2xl backdrop-blur-md group">
               <img
                 src={config.bannerUrl || 'https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&w=1200&q=80'}
                 alt="Banner Henri Imports"

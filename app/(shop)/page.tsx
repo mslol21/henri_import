@@ -2,7 +2,6 @@ import React from 'react';
 import { Hero } from '@/components/shop/Hero';
 import { CategoryGrid } from '@/components/shop/CategoryGrid';
 import { ProductCard } from '@/components/shop/ProductCard';
-import { ReviewsSection } from '@/components/shop/ReviewsSection';
 import { getCategories } from '@/actions/categories';
 import { getProducts } from '@/actions/products';
 import { Sparkles, Flame, Tag, ArrowRight } from 'lucide-react';
@@ -15,10 +14,9 @@ export default async function LandingPage() {
   // Filter sections
   const featuredProducts = allProducts.slice(0, 4);
   const bestSellers = allProducts.filter((p) => p.hasFlavors || p.basePromoPrice).slice(0, 4);
-  const promoProducts = allProducts.filter((p) => p.basePromoPrice);
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 min-h-screen">
       {/* 1. Hero */}
       <Hero />
 
@@ -26,7 +24,7 @@ export default async function LandingPage() {
       <CategoryGrid categories={categories} />
 
       {/* 3. Featured Products (Produtos em Destaque) */}
-      <section id="produtos-destaque" className="py-16 bg-white border-b border-slate-200">
+      <section id="produtos-destaque" className="py-12 sm:py-16 bg-white border-b border-slate-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
@@ -46,7 +44,7 @@ export default async function LandingPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {featuredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -55,7 +53,7 @@ export default async function LandingPage() {
       </section>
 
       {/* 4. Best Sellers (Produtos Mais Vendidos) */}
-      <section className="py-16 bg-slate-50 border-b border-slate-200">
+      <section className="py-12 sm:py-16 bg-slate-50 border-b border-slate-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
@@ -75,7 +73,7 @@ export default async function LandingPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {bestSellers.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -84,8 +82,8 @@ export default async function LandingPage() {
       </section>
 
       {/* 5. Banner Promocional Intermediário */}
-      <section className="py-12 bg-gradient-to-r from-purple-900 via-slate-900 to-indigo-950 text-white relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+      <section className="py-10 sm:py-14 bg-gradient-to-r from-purple-900 via-slate-900 to-indigo-950 text-white relative overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-3 text-center md:text-left">
             <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/20 px-3 py-1 text-xs font-bold text-purple-300 border border-purple-400/30">
               <Tag className="h-3.5 w-3.5" />
@@ -101,15 +99,12 @@ export default async function LandingPage() {
 
           <Link
             href="/search?promo=true"
-            className="shrink-0 rounded-xl bg-white px-6 py-3.5 text-sm font-black text-slate-900 shadow-xl hover:bg-slate-100 transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-white px-6 py-3.5 text-sm font-black text-slate-900 shadow-xl hover:bg-slate-100 transition-all"
           >
             Aproveitar Promoções
           </Link>
         </div>
       </section>
-
-      {/* 6. Avaliações dos Clientes */}
-      <ReviewsSection />
     </div>
   );
 }

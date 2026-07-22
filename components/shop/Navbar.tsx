@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Search, Menu, X, Phone, Flame, Zap } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Phone, Zap } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useConfig } from '@/contexts/ConfigContext';
 
@@ -23,25 +23,22 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-xs transition-all">
       {/* Top Banner announcement */}
       <div className="bg-slate-900 px-4 py-1.5 text-center text-xs font-medium text-white flex items-center justify-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 border border-purple-400/30">
-          ENTREGA RÁPIDA
+        <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 border border-purple-400/30">
+          <img src="/mascote.png" alt="Mascote" className="h-3.5 w-3.5 object-contain" />
+          ENTREGA EXPRESS
         </span>
         <span>Entregamos na sua região via Delivery Express! Peça pelo WhatsApp ou Site.</span>
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        {/* Logo Branding */}
+        {/* Logo Branding using Official /logo.png */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-indigo-800 text-white shadow-md shadow-purple-500/20 transition-transform group-hover:scale-105">
-            <Flame className="h-6 w-6 fill-purple-300 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-purple-600 transition-colors">
-              {config.name.toUpperCase()}
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-purple-600">
-              Vape & Tobacconist
-            </span>
+          <div className="h-12 w-auto max-w-[140px] sm:max-w-[160px] flex items-center justify-center transition-transform group-hover:scale-105">
+            <img
+              src="/logo.png"
+              alt={config.name}
+              className="h-full w-auto object-contain max-h-12"
+            />
           </div>
         </Link>
 

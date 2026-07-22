@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
-import { CheckCircle, Phone, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 interface OrderSuccessProps {
   searchParams: Promise<{
@@ -19,8 +19,13 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPro
     <div className="bg-slate-50 min-h-screen py-16 flex items-center justify-center">
       <div className="mx-auto max-w-lg px-4 text-center">
         <div className="bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-xl space-y-6">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mx-auto shadow-inner">
-            <CheckCircle className="h-10 w-10" />
+          <div className="relative inline-block">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-purple-100 text-purple-600 mx-auto shadow-inner p-3 border-2 border-purple-300">
+              <img src="/mascote.png" alt="Mascote Henri Imports" className="h-full w-full object-contain" />
+            </div>
+            <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-bold shadow-md">
+              ✓
+            </span>
           </div>
 
           <div className="space-y-2">
