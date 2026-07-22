@@ -6,10 +6,10 @@ import { StoreConfigData } from '@/types';
 const defaultConfig: StoreConfigData = {
   id: 'default',
   name: 'Henri Imports',
-  logoUrl: 'https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=400&q=80',
-  bannerUrl: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&w=1600&q=80',
-  primaryColor: '#7c3aed', // Purple
-  secondaryColor: '#f3f4f6', // Light gray
+  logoUrl: '/logo.png',
+  bannerUrl: '/images/hero-banner.png',
+  primaryColor: '#0284c7', // Sky Blue
+  secondaryColor: '#f0f9ff', // Light Sky Blue
   textColor: '#0f172a',
   whatsapp: '5511999999999',
   instagram: '@henri_imports',

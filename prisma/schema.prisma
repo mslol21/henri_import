@@ -52,7 +52,7 @@ model StoreConfig {
   name              String       @default("Henri Imports")
   logoUrl           String?
   bannerUrl         String?
-  primaryColor      String       @default("#7c3aed") // default purple
+  primaryColor      String       @default("#0284c7") // default light sky blue
   secondaryColor    String       @default("#f3f4f6") // light grey
   textColor         String       @default("#0f172a") // dark text
   whatsapp          String       @default("5511999999999")

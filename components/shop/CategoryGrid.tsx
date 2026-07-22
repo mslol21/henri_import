@@ -22,7 +22,7 @@ export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
               EXPLORE NOSSO CATÁLOGO
             </span>
             <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
@@ -31,7 +31,7 @@ export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
           </div>
           <Link
             href="/search"
-            className="text-xs font-bold text-purple-600 hover:text-purple-800 transition-colors flex items-center gap-1"
+            className="text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors flex items-center gap-1"
           >
             Ver todos os produtos →
           </Link>
@@ -49,15 +49,15 @@ export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
               >
                 <Link
                   href={`/search?category=${cat.slug}`}
-                  className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-purple-300 transition-all text-center h-full"
+                  className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-sky-300 transition-all text-center h-full"
                 >
                   <div
                     className="flex h-14 w-14 items-center justify-center rounded-2xl text-white mb-3 shadow-md group-hover:scale-110 transition-transform"
-                    style={{ backgroundColor: cat.color || '#7c3aed' }}
+                    style={{ backgroundColor: cat.color || '#0284c7' }}
                   >
                     <IconComponent className="h-7 w-7" />
                   </div>
-                  <h3 className="text-xs font-bold text-slate-800 group-hover:text-purple-600 transition-colors line-clamp-1">
+                  <h3 className="text-xs font-bold text-slate-800 group-hover:text-sky-600 transition-colors line-clamp-1">
                     {cat.name}
                   </h3>
                   <span className="text-[10px] text-slate-400 font-medium mt-0.5">

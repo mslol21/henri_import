@@ -54,9 +54,9 @@ export function FlavorSelector({ product }: { product: ProductData }) {
           {selectedFlavor && (
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl bg-slate-900/85 backdrop-blur-md px-4 py-3 text-white border border-slate-700/50 shadow-md">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-purple-400" />
+                <Sparkles className="h-4 w-4 text-sky-400" />
                 <span className="text-xs font-bold text-slate-300">Sabor selecionado:</span>
-                <span className="text-sm font-black text-purple-300">{selectedFlavor.name}</span>
+                <span className="text-sm font-black text-sky-300">{selectedFlavor.name}</span>
               </div>
               <span className="text-[10px] font-mono text-slate-400 uppercase">SKU: {activeSku}</span>
             </div>
@@ -69,7 +69,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
             <button
               onClick={() => setSelectedFlavor(null)}
               className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
-                selectedFlavor === null ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200'
+                selectedFlavor === null ? 'border-sky-600 ring-2 ring-sky-600/30' : 'border-slate-200'
               }`}
             >
               <img src={product.mainImageUrl} alt="Principal" className="h-full w-full object-cover" />
@@ -79,7 +79,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
                 key={f.id}
                 onClick={() => setSelectedFlavor(f)}
                 className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
-                  selectedFlavor?.id === f.id ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200'
+                  selectedFlavor?.id === f.id ? 'border-sky-600 ring-2 ring-sky-600/30' : 'border-slate-200'
                 }`}
               >
                 <img src={f.imageUrl || product.mainImageUrl} alt={f.name} className="h-full w-full object-cover" />
@@ -92,7 +92,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
       {/* Product & Flavor Info Section */}
       <div className="lg:col-span-6 space-y-6">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
+          <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
             {product.brand}
           </span>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
@@ -135,7 +135,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-purple-600" />
+                <Sparkles className="h-4 w-4 text-sky-600" />
                 <span>Escolha o Sabor Obrigatório</span>
               </label>
               <span className="text-xs text-slate-500 font-medium">
@@ -153,7 +153,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
                     onClick={() => setSelectedFlavor(flavor)}
                     className={`flex items-center gap-3 p-3 rounded-2xl border text-left transition-all relative overflow-hidden ${
                       isSelected
-                        ? 'border-purple-600 bg-purple-50/70 shadow-sm ring-2 ring-purple-600/20'
+                        ? 'border-sky-600 bg-sky-50/70 shadow-sm ring-2 ring-sky-600/20'
                         : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -175,7 +175,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
                     </div>
 
                     {isSelected && (
-                      <div className="h-5 w-5 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+                      <div className="h-5 w-5 rounded-full bg-sky-600 text-white flex items-center justify-center shrink-0">
                         <Check className="h-3 w-3" />
                       </div>
                     )}
@@ -215,7 +215,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
               type="button"
               disabled={activeStock <= 0}
               onClick={handleAddToCart}
-              className="flex-1 inline-flex items-center justify-center gap-3 rounded-xl bg-purple-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-purple-600/30 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 inline-flex items-center justify-center gap-3 rounded-xl bg-sky-600 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-sky-600/30 hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <ShoppingBag className="h-5 w-5" />
               <span>Adicionar ao Carrinho • {formatCurrency(activePrice * quantity)}</span>
@@ -232,7 +232,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
               placeholder="Ex: Embalar para presente ou preferência..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:bg-white focus:outline-none"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:bg-white focus:outline-none"
             />
           </div>
 

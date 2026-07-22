@@ -22,11 +22,8 @@ import {
   CreditCard,
   QrCode,
   Banknote,
-  Sparkles,
   Phone,
-  CheckCircle,
   AlertCircle,
-  ArrowRight,
   Clock,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -186,7 +183,7 @@ export default function CheckoutPage() {
     return (
       <div className="bg-slate-50 min-h-screen py-16 flex items-center justify-center">
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xs max-w-md text-center space-y-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-50 text-purple-600 mx-auto">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-sky-50 text-sky-600 mx-auto">
             <ShoppingBag className="h-8 w-8" />
           </div>
           <h2 className="text-xl font-black text-slate-900">Seu carrinho está vazio</h2>
@@ -195,7 +192,7 @@ export default function CheckoutPage() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center justify-center rounded-xl bg-purple-600 px-6 py-3 text-xs font-bold text-white hover:bg-purple-500 transition-colors"
+            className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-3 text-xs font-bold text-white hover:bg-sky-500 transition-colors"
           >
             Voltar para a loja
           </Link>
@@ -208,7 +205,7 @@ export default function CheckoutPage() {
     <div className="bg-slate-50 min-h-screen py-8 sm:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
+          <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
             FINALIZAR COMPRA
           </span>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight sm:text-4xl mt-0.5">
@@ -225,7 +222,7 @@ export default function CheckoutPage() {
             {/* 1. Dados Pessoais */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
               <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-[11px] text-white">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[11px] text-white">
                   1
                 </span>
                 Identificação do Cliente
@@ -238,7 +235,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="Ex: João da Silva"
                     {...register('name')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                   {errors.name && <p className="text-[11px] font-semibold text-red-600 mt-1">{errors.name.message}</p>}
                 </div>
@@ -249,7 +246,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="(11) 99999-9999"
                     {...register('phone')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                   {errors.phone && <p className="text-[11px] font-semibold text-red-600 mt-1">{errors.phone.message}</p>}
                 </div>
@@ -259,7 +256,7 @@ export default function CheckoutPage() {
             {/* 2. Endereço de Entrega & Cálculo Automático */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
               <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-[11px] text-white">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[11px] text-white">
                   2
                 </span>
                 Endereço de Entrega & Distância
@@ -272,7 +269,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="00000-000"
                     {...register('cep')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                   {errors.cep && <p className="text-[11px] font-semibold text-red-600 mt-1">{errors.cep.message}</p>}
                 </div>
@@ -283,7 +280,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="Ex: Av. Paulista"
                     {...register('street')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                   {errors.street && <p className="text-[11px] font-semibold text-red-600 mt-1">{errors.street.message}</p>}
                 </div>
@@ -296,7 +293,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="1000"
                     {...register('number')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                   {errors.number && <p className="text-[11px] font-semibold text-red-600 mt-1">{errors.number.message}</p>}
                 </div>
@@ -307,7 +304,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="Apto 42 / Bloco B"
                     {...register('complement')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
@@ -319,7 +316,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="Bela Vista"
                     {...register('neighborhood')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
@@ -328,7 +325,7 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="São Paulo"
                     {...register('city')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
@@ -337,14 +334,14 @@ export default function CheckoutPage() {
                     type="text"
                     placeholder="SP"
                     {...register('state')}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Delivery distance feedback card */}
               {isCalculatingDelivery && (
-                <div className="p-3 bg-purple-50 rounded-2xl text-purple-700 text-xs font-semibold flex items-center gap-2 animate-pulse">
+                <div className="p-3 bg-sky-50 rounded-2xl text-sky-700 text-xs font-semibold flex items-center gap-2 animate-pulse">
                   <Truck className="h-4 w-4" />
                   <span>Buscando endereço e calculando distância com a loja...</span>
                 </div>
@@ -380,26 +377,26 @@ export default function CheckoutPage() {
             {/* 3. Forma de Pagamento */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
               <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-[11px] text-white">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[11px] text-white">
                   3
                 </span>
                 Forma de Pagamento
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer hover:border-purple-600 transition-all has-[:checked]:border-purple-600 has-[:checked]:bg-purple-50">
+                <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer hover:border-sky-600 transition-all has-[:checked]:border-sky-600 has-[:checked]:bg-sky-50">
                   <input
                     type="radio"
                     value="PIX"
                     {...register('paymentMethod')}
                     className="sr-only"
                   />
-                  <QrCode className="h-6 w-6 text-purple-600 mb-2" />
+                  <QrCode className="h-6 w-6 text-sky-600 mb-2" />
                   <span className="text-xs font-bold text-slate-900">PIX</span>
                   <span className="text-[10px] text-slate-500">Aprovação na hora</span>
                 </label>
 
-                <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer hover:border-purple-600 transition-all has-[:checked]:border-purple-600 has-[:checked]:bg-purple-50">
+                <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer hover:border-sky-600 transition-all has-[:checked]:border-sky-600 has-[:checked]:bg-sky-50">
                   <input
                     type="radio"
                     value="CASH"
@@ -411,14 +408,14 @@ export default function CheckoutPage() {
                   <span className="text-[10px] text-slate-500">Pague na entrega</span>
                 </label>
 
-                <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer hover:border-purple-600 transition-all has-[:checked]:border-purple-600 has-[:checked]:bg-purple-50">
+                <label className="flex flex-col items-center justify-center p-4 rounded-2xl border border-slate-200 bg-slate-50 cursor-pointer hover:border-sky-600 transition-all has-[:checked]:border-sky-600 has-[:checked]:bg-sky-50">
                   <input
                     type="radio"
                     value="CARD_ON_DELIVERY"
                     {...register('paymentMethod')}
                     className="sr-only"
                   />
-                  <CreditCard className="h-6 w-6 text-blue-600 mb-2" />
+                  <CreditCard className="h-6 w-6 text-cyan-600 mb-2" />
                   <span className="text-xs font-bold text-slate-900">Maquininha</span>
                   <span className="text-[10px] text-slate-500">Débito ou Crédito</span>
                 </label>
@@ -433,7 +430,7 @@ export default function CheckoutPage() {
                   rows={2}
                   placeholder="Ex: Levar troco para R$ 100 / Deixar com o porteiro..."
                   {...register('notes')}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs text-slate-900 focus:border-purple-600 focus:bg-white focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs text-slate-900 focus:border-sky-600 focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
@@ -444,7 +441,7 @@ export default function CheckoutPage() {
             <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-lg space-y-6 sticky top-24">
               <h3 className="text-base font-black text-slate-900 tracking-tight border-b border-slate-100 pb-3 flex items-center justify-between">
                 <span>Resumo do Pedido</span>
-                <span className="text-xs font-bold text-purple-600">{items.length} itens</span>
+                <span className="text-xs font-bold text-sky-600">{items.length} itens</span>
               </h3>
 
               {/* Items List */}
@@ -452,10 +449,10 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.id} className="flex items-center justify-between text-xs text-slate-700">
                     <div className="flex items-center gap-2 min-w-0 pr-2">
-                      <span className="font-bold text-purple-600">{item.quantity}x</span>
+                      <span className="font-bold text-sky-600">{item.quantity}x</span>
                       <span className="truncate font-medium">{item.product.name}</span>
                       {item.selectedFlavor && (
-                        <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-md">
+                        <span className="text-[10px] font-bold text-sky-700 bg-sky-100 px-1.5 py-0.5 rounded-md">
                           {item.selectedFlavor.name}
                         </span>
                       )}
@@ -488,7 +485,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-base font-black text-slate-900 pt-3 border-t border-slate-200">
                   <span>Total a Pagar</span>
-                  <span className="text-purple-600 text-lg">{formatCurrency(grandTotal)}</span>
+                  <span className="text-sky-600 text-lg">{formatCurrency(grandTotal)}</span>
                 </div>
               </div>
 

@@ -5,8 +5,8 @@ export const mockConfig: StoreConfigData = {
   name: 'Henri Imports',
   logoUrl: '/logo.png',
   bannerUrl: '/images/hero-banner.png',
-  primaryColor: '#7c3aed',
-  secondaryColor: '#f3f4f6',
+  primaryColor: '#0284c7', // Light Sky Blue
+  secondaryColor: '#f0f9ff',
   textColor: '#0f172a',
   whatsapp: '5511999999999',
   instagram: '@henri.imports',
@@ -36,7 +36,7 @@ export const mockCategories: CategoryData[] = [
     slug: 'pods-descartaveis',
     icon: 'Zap',
     imageUrl: '/images/ignite-main.png',
-    color: '#7c3aed',
+    color: '#0284c7', // Sky Blue
     displayOrder: 1,
     active: true,
     productCount: 14,
@@ -47,7 +47,7 @@ export const mockCategories: CategoryData[] = [
     slug: 'vapes-juices',
     icon: 'Wind',
     imageUrl: '/images/elfbar-main.png',
-    color: '#a855f7',
+    color: '#06b6d4', // Cyan
     displayOrder: 2,
     active: true,
     productCount: 8,
@@ -58,7 +58,7 @@ export const mockCategories: CategoryData[] = [
     slug: 'essencias',
     icon: 'Flame',
     imageUrl: '/images/essencia-zomo.png',
-    color: '#ec4899',
+    color: '#38bdf8', // Light Blue Accent
     displayOrder: 3,
     active: true,
     productCount: 22,
@@ -69,7 +69,7 @@ export const mockCategories: CategoryData[] = [
     slug: 'narguiles',
     icon: 'Sparkles',
     imageUrl: '/images/triton-hookah.png',
-    color: '#6366f1',
+    color: '#0369a1', // Deep Sky Blue
     displayOrder: 4,
     active: true,
     productCount: 6,
@@ -80,7 +80,7 @@ export const mockCategories: CategoryData[] = [
     slug: 'carvoes',
     icon: 'Box',
     imageUrl: '/images/carvao-zomo.png',
-    color: '#f59e0b',
+    color: '#0d9488', // Teal Blue
     displayOrder: 5,
     active: true,
     productCount: 9,
@@ -91,7 +91,7 @@ export const mockCategories: CategoryData[] = [
     slug: 'sedas',
     icon: 'FileText',
     imageUrl: '/images/seda-smoking.png',
-    color: '#10b981',
+    color: '#0284c7',
     displayOrder: 6,
     active: true,
     productCount: 18,
@@ -102,7 +102,7 @@ export const mockCategories: CategoryData[] = [
     slug: 'acessorios',
     icon: 'ShieldAlert',
     imageUrl: '/images/pegador-hookah.png',
-    color: '#3b82f6',
+    color: '#0ea5e9',
     displayOrder: 7,
     active: true,
     productCount: 11,
@@ -200,9 +200,7 @@ export const mockProducts: ProductData[] = [
     baseSku: 'ELF-BC10K-BASE',
     internalCode: 'ELF10K',
     mainImageUrl: '/images/elfbar-main.png',
-    gallery: [
-      '/images/elfbar-main.png',
-    ],
+    gallery: ['/images/elfbar-main.png'],
     weight: 0.1,
     active: true,
     flavors: [

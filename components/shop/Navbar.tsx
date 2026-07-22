@@ -23,7 +23,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-xs transition-all">
       {/* Top Banner announcement */}
       <div className="bg-slate-900 px-4 py-1.5 text-center text-xs font-medium text-white flex items-center justify-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 border border-purple-400/30">
+        <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/20 px-2.5 py-0.5 text-[10px] font-bold text-sky-300 border border-sky-400/30">
           <img src="/mascote.png" alt="Mascote" className="h-3.5 w-3.5 object-contain" />
           ENTREGA EXPRESS
         </span>
@@ -31,7 +31,7 @@ export function Navbar() {
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        {/* Logo Branding using Official /logo.png */}
+        {/* Logo Branding */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="h-12 w-auto max-w-[140px] sm:max-w-[160px] flex items-center justify-center transition-transform group-hover:scale-105">
             <img
@@ -52,12 +52,12 @@ export function Navbar() {
             placeholder="Buscar por produto, marca, sabor ou essência..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-full border border-slate-300 bg-slate-50 py-2 pl-4 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:border-purple-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+            className="w-full rounded-full border border-slate-300 bg-slate-50 py-2 pl-4 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:border-sky-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all"
           />
           <button
             type="submit"
             aria-label="Buscar produtos"
-            className="absolute right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+            className="absolute right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-sky-600 text-white hover:bg-sky-700 transition-colors"
           >
             <Search className="h-4 w-4" />
           </button>
@@ -80,11 +80,11 @@ export function Navbar() {
           <button
             onClick={() => setIsCartOpen(true)}
             aria-label="Abrir carrinho de compras"
-            className="relative flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-800 hover:bg-purple-50 hover:text-purple-600 transition-all"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full bg-sky-50 text-slate-800 hover:bg-sky-100 hover:text-sky-600 transition-all"
           >
-            <ShoppingBag className="h-5 w-5" />
+            <ShoppingBag className="h-5 w-5 text-sky-700" />
             {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[11px] font-bold text-white shadow-xs animate-pulse">
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-sky-600 text-[11px] font-bold text-white shadow-xs animate-pulse">
                 {itemCount}
               </span>
             )}
@@ -110,12 +110,12 @@ export function Navbar() {
               placeholder="Buscar produtos ou sabores..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 py-2 pl-3 pr-9 text-sm focus:border-purple-600 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 py-2 pl-3 pr-9 text-sm focus:border-sky-600 focus:outline-none"
             />
             <button
               type="submit"
               aria-label="Buscar produtos"
-              className="absolute right-2 text-slate-500 hover:text-purple-600"
+              className="absolute right-2 text-slate-500 hover:text-sky-600"
             >
               <Search className="h-4 w-4" />
             </button>
@@ -136,7 +136,7 @@ export function Navbar() {
               className="px-3 py-2 rounded-lg hover:bg-slate-100 flex items-center justify-between"
             >
               <span>Pods Descartáveis</span>
-              <Zap className="h-4 w-4 text-purple-600" />
+              <Zap className="h-4 w-4 text-sky-600" />
             </Link>
 
             <Link
@@ -166,7 +166,7 @@ export function Navbar() {
             <Link
               href="/admin/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2 text-xs font-semibold text-purple-600 uppercase tracking-wider hover:bg-purple-50 rounded-lg mt-2"
+              className="px-3 py-2 text-xs font-semibold text-sky-600 uppercase tracking-wider hover:bg-sky-50 rounded-lg mt-2"
             >
               Área Administrativa
             </Link>

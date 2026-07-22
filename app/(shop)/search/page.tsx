@@ -2,208 +2,129 @@ import React from 'react';
 import { getProducts } from '@/actions/products';
 import { getCategories } from '@/actions/categories';
 import { ProductCard } from '@/components/shop/ProductCard';
+import { Search, Filter, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { Search, Filter, Sparkles, X } from 'lucide-react';
 
 interface SearchPageProps {
   searchParams: Promise<{
     q?: string;
     category?: string;
-    brand?: string;
     promo?: string;
+    sort?: string;
   }>;
 }
 
-export default async function SearchCatalogPage({ searchParams }: SearchPageProps) {
-  const queryParams = await searchParams;
-  const search = queryParams.q || '';
-  const categorySlug = queryParams.category || '';
-  const brand = queryParams.brand || '';
-  const promoOnly = queryParams.promo === 'true';
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const params = await searchParams;
+  const query = params.q || '';
+  const selectedCategorySlug = params.category || '';
+  const isPromoOnly = params.promo === 'true';
 
+  const allProducts = await getProducts();
   const categories = await getCategories();
-  const products = await getProducts({
-    search,
-    categorySlug,
-    brand,
-    promoOnly,
+
+  // Filter products based on search parameters
+  let filtered = allProducts.filter((p) => {
+    if (query) {
+      const q = query.toLowerCase();
+      const matchName = p.name.toLowerCase().includes(q);
+      const matchBrand = p.brand.toLowerCase().includes(q);
+      const matchCategory = p.category?.name.toLowerCase().includes(q);
+      const matchFlavor = p.flavors?.some((f) => f.name.toLowerCase().includes(q));
+      if (!matchName && !matchBrand && !matchCategory && !matchFlavor) return false;
+    }
+
+    if (selectedCategorySlug) {
+      if (p.category?.slug !== selectedCategorySlug) return false;
+    }
+
+    if (isPromoOnly) {
+      if (!p.basePromoPrice || p.basePromoPrice >= p.basePrice) return false;
+    }
+
+    return true;
   });
 
-  // Extract unique brands for filter
-  const allProducts = await getProducts();
-  const availableBrands = Array.from(new Set(allProducts.map((p) => p.brand)));
-
   return (
-    <div className="bg-slate-50 min-h-screen py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="bg-slate-50 min-h-screen py-8 sm:py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Header Title */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
               CATÁLOGO COMPLETO
             </span>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight sm:text-3xl mt-0.5">
-              {search ? `Resultados para "${search}"` : categorySlug ? `Categoria: ${categories.find(c => c.slug === categorySlug)?.name || categorySlug}` : 'Todos os Produtos'}
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight sm:text-4xl">
+              {query ? `Busca por: "${query}"` : 'Explorar Produtos'}
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Foram encontrados <strong className="text-slate-900">{products.length}</strong> produtos
+              Encontrados {filtered.length} produtos disponíveis em estoque.
             </p>
           </div>
+        </div>
 
-          {/* Active Filter Badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            {search && (
-              <Link
-                href="/search"
-                className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-purple-700 hover:bg-purple-200"
-              >
-                <span>Busca: {search}</span>
-                <X className="h-3.5 w-3.5" />
-              </Link>
-            )}
-            {categorySlug && (
-              <Link
-                href="/search"
-                className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-purple-700 hover:bg-purple-200"
-              >
-                <span>Cat: {categorySlug}</span>
-                <X className="h-3.5 w-3.5" />
-              </Link>
-            )}
-            {brand && (
-              <Link
-                href="/search"
-                className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-purple-700 hover:bg-purple-200"
-              >
-                <span>Marca: {brand}</span>
-                <X className="h-3.5 w-3.5" />
-              </Link>
-            )}
-            {promoOnly && (
-              <Link
-                href="/search"
-                className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-purple-700 hover:bg-purple-200"
-              >
-                <span>Promoções</span>
-                <X className="h-3.5 w-3.5" />
-              </Link>
-            )}
+        {/* Filter Badges & Categories */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
+          <Link
+            href="/search"
+            className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-colors ${
+              !selectedCategorySlug && !isPromoOnly
+                ? 'bg-sky-600 text-white shadow-xs'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            Todos os Produtos
+          </Link>
+
+          <Link
+            href="/search?promo=true"
+            className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-colors flex items-center gap-1.5 ${
+              isPromoOnly
+                ? 'bg-sky-600 text-white shadow-xs'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-sky-400" />
+            <span>Em Promoção</span>
+          </Link>
+
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/search?category=${cat.slug}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-colors ${
+                selectedCategorySlug === cat.slug
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              {cat.name}
+            </Link>
+          ))}
+        </div>
+
+        {/* Product Grid */}
+        {filtered.length === 0 ? (
+          <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-4 max-w-md mx-auto my-12">
+            <Search className="h-12 w-12 text-slate-300 mx-auto" />
+            <h3 className="text-lg font-bold text-slate-800">Nenhum produto encontrado</h3>
+            <p className="text-xs text-slate-500">
+              Tente buscar por outros termos como "Ignite", "Zomo", "Pod" ou limpe os filtros.
+            </p>
+            <Link
+              href="/search"
+              className="inline-flex rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-sky-500 transition-colors"
+            >
+              Ver todos os produtos
+            </Link>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Sidebar Filters */}
-          <aside className="lg:col-span-3 space-y-6 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                <Filter className="h-4 w-4 text-purple-600" />
-                <span>Filtros Inteligentes</span>
-              </h3>
-              <Link href="/search" className="text-[11px] font-bold text-purple-600 hover:underline">
-                Limpar
-              </Link>
-            </div>
-
-            {/* Categorias */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                Categorias
-              </h4>
-              <div className="space-y-1 text-xs font-medium">
-                <Link
-                  href="/search"
-                  className={`block px-3 py-1.5 rounded-xl transition-colors ${
-                    !categorySlug ? 'bg-purple-600 text-white font-bold' : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  Todas as categorias
-                </Link>
-                {categories.map((cat) => (
-                  <Link
-                    key={cat.id}
-                    href={`/search?category=${cat.slug}${search ? `&q=${search}` : ''}`}
-                    className={`block px-3 py-1.5 rounded-xl transition-colors ${
-                      categorySlug === cat.slug
-                        ? 'bg-purple-600 text-white font-bold'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Marcas */}
-            <div className="space-y-2 border-t border-slate-100 pt-4">
-              <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                Marcas
-              </h4>
-              <div className="space-y-1 text-xs font-medium">
-                {availableBrands.map((b) => (
-                  <Link
-                    key={b}
-                    href={`/search?brand=${encodeURIComponent(b)}${categorySlug ? `&category=${categorySlug}` : ''}`}
-                    className={`block px-3 py-1.5 rounded-xl transition-colors ${
-                      brand === b ? 'bg-purple-600 text-white font-bold' : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    {b}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            {/* Promoções Check */}
-            <div className="border-t border-slate-100 pt-4">
-              <Link
-                href={promoOnly ? '/search' : '/search?promo=true'}
-                className={`flex items-center justify-between p-3 rounded-2xl border text-xs font-bold transition-all ${
-                  promoOnly
-                    ? 'border-purple-600 bg-purple-50 text-purple-700'
-                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-purple-600" />
-                  Apenas Promoções
-                </span>
-                <span className="h-4 w-4 rounded-full border border-purple-600 flex items-center justify-center">
-                  {promoOnly && <span className="h-2 w-2 rounded-full bg-purple-600" />}
-                </span>
-              </Link>
-            </div>
-          </aside>
-
-          {/* Right Product Grid */}
-          <main className="lg:col-span-9">
-            {products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200 text-center space-y-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-50 text-purple-600">
-                  <Search className="h-8 w-8" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">Nenhum produto encontrado</h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Tente buscar por outros termos ou remova os filtros aplicados.
-                  </p>
-                </div>
-                <Link
-                  href="/search"
-                  className="rounded-xl bg-purple-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-purple-500 transition-colors"
-                >
-                  Limpar Filtros
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            )}
-          </main>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filtered.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

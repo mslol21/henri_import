@@ -18,7 +18,7 @@ export function ProductCard({ product }: { product: ProductData }) {
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
-      className="group relative flex flex-col rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-purple-200 transition-all overflow-hidden"
+      className="group relative flex flex-col rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-xl hover:border-sky-200 transition-all overflow-hidden"
     >
       {/* Image Container */}
       <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
@@ -30,15 +30,15 @@ export function ProductCard({ product }: { product: ProductData }) {
 
         {/* Promo Discount Tag */}
         {hasPromo && (
-          <div className="absolute top-3 left-3 rounded-full bg-purple-600 px-2.5 py-1 text-[11px] font-black text-white shadow-xs">
+          <div className="absolute top-3 left-3 rounded-full bg-sky-600 px-2.5 py-1 text-[11px] font-black text-white shadow-xs">
             -{discountPercent}% OFF
           </div>
         )}
 
         {/* Flavors Count Badge */}
         {product.hasFlavors && product.flavors && product.flavors.length > 0 && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-slate-900/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-purple-300 border border-slate-700/50">
-            <Sparkles className="h-3 w-3 text-purple-400" />
+          <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-slate-900/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-sky-300 border border-slate-700/50">
+            <Sparkles className="h-3 w-3 text-sky-400" />
             <span>{product.flavors.length} Sabores</span>
           </div>
         )}
@@ -47,11 +47,11 @@ export function ProductCard({ product }: { product: ProductData }) {
       {/* Product Information */}
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between text-xs text-slate-400 font-semibold mb-1">
-          <span className="uppercase tracking-wider text-purple-600">{product.brand}</span>
+          <span className="uppercase tracking-wider text-sky-600">{product.brand}</span>
           <span>{product.category?.name || 'Vape Shop'}</span>
         </div>
 
-        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-purple-600 transition-colors mb-2 min-h-[2.5rem]">
+        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-sky-600 transition-colors mb-2 min-h-[2.5rem]">
           <Link href={`/product/${product.slug}`}>
             <span aria-hidden="true" className="absolute inset-0" />
             {product.name}
@@ -71,9 +71,9 @@ export function ProductCard({ product }: { product: ProductData }) {
         </div>
 
         {/* Button Action */}
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-600">
+        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-sky-600">
           <span>{product.hasFlavors ? 'Escolher Sabor' : 'Ver Detalhes'}</span>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-50 text-sky-600 group-hover:bg-sky-600 group-hover:text-white transition-colors">
             <ArrowRight className="h-4 w-4" />
           </div>
         </div>
