@@ -12,7 +12,7 @@ export function Footer() {
   )}`;
 
   return (
-    <footer className="relative bg-white border-t border-slate-200 text-slate-700 overflow-hidden">
+    <footer className="relative bg-white/85 backdrop-blur-xs border-t border-sky-100 text-slate-700 overflow-hidden">
       {/* Light Sky Blue Vapor Smoke Orbs */}
       <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-sky-100/50 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-cyan-100/40 blur-3xl pointer-events-none" />

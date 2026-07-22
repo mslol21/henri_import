@@ -18,7 +18,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
   return (
-    <section className="py-12 bg-slate-50 border-b border-slate-200">
+    <section className="py-12 bg-sky-50/50 backdrop-blur-xs border-b border-sky-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
@@ -49,7 +49,7 @@ export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
               >
                 <Link
                   href={`/search?category=${cat.slug}`}
-                  className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:shadow-md hover:border-sky-300 transition-all text-center h-full"
+                  className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white/90 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-sky-300 transition-all text-center h-full"
                 >
                   <div
                     className="flex h-14 w-14 items-center justify-center rounded-2xl text-white mb-3 shadow-md group-hover:scale-110 transition-transform"
