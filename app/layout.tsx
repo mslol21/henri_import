@@ -54,13 +54,13 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased min-h-screen bg-white text-slate-900 selection:bg-purple-600 selection:text-white relative">
-        {/* Fixed Watermark Logo Background (Subtle & Non-intrusive) */}
+      <body className="antialiased min-h-screen bg-white text-slate-900 selection:bg-sky-600 selection:text-white relative">
+        {/* Fixed Watermark Logo Background (Marca d'água oficial no fundo do site) */}
         <div className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden select-none">
           <img
             src="/logo.png"
-            alt=""
-            className="w-full max-w-[900px] object-contain opacity-[0.035] filter grayscale scale-110"
+            alt="Marca d'água Henri Imports"
+            className="w-full max-w-[800px] object-contain opacity-[0.06] scale-105 transition-opacity"
           />
         </div>
 
