@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum DeliveryMode {
+  FAIXAS
+  KM
+}
+
+enum PaymentMethod {
+  PIX
+  CASH
+  CARD_ON_DELIVERY
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum MovementType {
+  IN
+  OUT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StoreConfig {
+  id                String       @id @default("default")
+  name              String       @default("Henri Imports")
+  logoUrl           String?
+  bannerUrl         String?
+  primaryColor      String       @default("#7c3aed") // default purple
+  secondaryColor    String       @default("#f3f4f6") // light grey
+  textColor         String       @default("#0f172a") // dark text
+  whatsapp          String       @default("5511999999999")
+  instagram         String?
+  facebook          String?
+  address           String       @default("Av. Paulista, 1000 - São Paulo, SP")
+  latitude          Float        @default(-23.5616)
+  longitude         Float        @default(-46.6560)
+  cep               String       @default("01310-100")
+  businessHours     String       @default("Segunda a Sábado das 10h às 22h")
+  deliveryMode      DeliveryMode @default(FAIXAS)
+  deliveryKmRate    Float        @default(2.50)
+  deliveryRanges    Json         // Array of { maxKm: number, price: number }
+  pixKey            String?
+  pixName           String?
+  whatsappTemplate  String       @default("Novo Pedido Henri Imports...")
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  name         String
+  slug         String    @unique
+  icon         String    @default("Package") // Lucide icon identifier
+  imageUrl     String?
+  color        String    @default("#7c3aed")
+  displayOrder Int       @default(0)
+  active       Boolean   @default(true)
+  products     Product[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Product {
+  id             String          @id @default(uuid())
+  name           String
+  slug           String          @unique
+  brand          String
+  categoryId     String
+  category       Category        @relation(fields: [categoryId], references: [id])
+  description    String          @db.Text
+  basePrice      Float
+  basePromoPrice Float?
+  hasFlavors     Boolean         @default(false)
+  baseStock      Int             @default(0)
+  baseSku        String          @unique
+  internalCode   String?
+  mainImageUrl   String
+  gallery        Json            // Array of image URLs
+  weight         Float           @default(0.0) // In kg for logistics
+  active         Boolean         @default(true)
+  flavors        Flavor[]
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Flavor {
+  id             String          @id @default(uuid())
+  productId      String
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name           String
+  imageUrl       String?
+  price          Float?          // If null, falls back to product price
+  stock          Int             @default(0)
+  sku            String          @unique
+  description    String?
+  displayOrder   Int             @default(0)
+  active         Boolean         @default(true)
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  phone     String    @unique
+  email     String?
+  addresses Address[]
+  orders    Order[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Address {
+  id           String   @id @default(uuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id])
+  cep          String
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  distanceKm   Float?
+  orders       Order[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Order {
+  id            String         @id @default(uuid())
+  number        Int            @unique @default(autoincrement())
+  clientId      String
+  client        Client         @relation(fields: [clientId], references: [id])
+  addressId     String
+  address       Address        @relation(fields: [addressId], references: [id])
+  subtotal      Float
+  deliveryFee   Float
+  total         Float
+  paymentMethod PaymentMethod
+  notes         String?
+  status        OrderStatus    @default(NEW)
+  whatsappSent  Boolean        @default(false)
+  items         OrderItem[]
+  history       OrderHistory[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  flavorId        String?
+  flavor          Flavor?  @relation(fields: [flavorId], references: [id])
+  quantity        Int
+  priceAtPurchase Float
+  createdAt       DateTime @default(now())
+}
+
+model OrderHistory {
+  id          String      @id @default(uuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      OrderStatus
+  notes       String?
+  changedBy   String      @default("System") // Admin Name or "Client"
+  createdAt   DateTime    @default(now())
+}
+
+model StockMovement {
+  id        String       @id @default(uuid())
+  productId String
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  flavorId  String?
+  flavor    Flavor?      @relation(fields: [flavorId], references: [id], onDelete: Cascade)
+  type      MovementType
+  quantity  Int
+  reason    String?
+  date      DateTime     @default(now())
+  createdAt DateTime     @default(now())
+}
+
+model Promotion {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String
+  startDate   DateTime?
+  endDate     DateTime?
+  buttonText  String?
+  buttonLink  String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Banner {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  imageUrl     String
+  link         String?
+  active       Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
