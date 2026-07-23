@@ -184,7 +184,7 @@ export default function AdminCategoriesPage() {
           <span className="text-sm font-semibold">Carregando categorias...</span>
         </div>
       ) : error ? (
-        <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm">
+        <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm text-slate-900">
           <AlertCircle className="h-4 w-4" /> {error}
         </div>
       ) : filtered.length === 0 ? (

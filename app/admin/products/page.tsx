@@ -356,17 +356,17 @@ export default function AdminProductsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Produto *</label>
-                <input type="text" value={productForm.name} onChange={(e) => handleProductNameChange(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                <input type="text" value={productForm.name} onChange={(e) => handleProductNameChange(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
               </div>
               
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Slug (URL) *</label>
-                <input type="text" value={productForm.slug} onChange={(e) => setProductForm({...productForm, slug: e.target.value.toLowerCase()})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono" />
+                <input type="text" value={productForm.slug} onChange={(e) => setProductForm({...productForm, slug: e.target.value.toLowerCase()})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900" />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Categoria *</label>
-                <select value={productForm.categoryId} onChange={(e) => setProductForm({...productForm, categoryId: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm">
+                <select value={productForm.categoryId} onChange={(e) => setProductForm({...productForm, categoryId: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900">
                   <option value="">Selecione...</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -374,22 +374,22 @@ export default function AdminProductsPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Preço Base (R$) *</label>
-                <input type="number" step="0.01" value={productForm.basePrice} onChange={(e) => setProductForm({...productForm, basePrice: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                <input type="number" step="0.01" value={productForm.basePrice} onChange={(e) => setProductForm({...productForm, basePrice: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">SKU Base *</label>
-                <input type="text" value={productForm.baseSku} onChange={(e) => setProductForm({...productForm, baseSku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono" />
+                <input type="text" value={productForm.baseSku} onChange={(e) => setProductForm({...productForm, baseSku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900" />
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">URL da Imagem Principal *</label>
-                <input type="text" placeholder="https://..." value={productForm.mainImageUrl} onChange={(e) => setProductForm({...productForm, mainImageUrl: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                <input type="text" placeholder="https://..." value={productForm.mainImageUrl} onChange={(e) => setProductForm({...productForm, mainImageUrl: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">Descrição</label>
-                <textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                <textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
               </div>
 
               <div className="flex items-center gap-6 md:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-xl">
@@ -406,7 +406,7 @@ export default function AdminProductsPage() {
               {!productForm.hasFlavors && (
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Estoque Inicial (Sem sabor)</label>
-                  <input type="number" value={productForm.baseStock} onChange={(e) => setProductForm({...productForm, baseStock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                  <input type="number" value={productForm.baseStock} onChange={(e) => setProductForm({...productForm, baseStock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
                 </div>
               )}
             </div>
@@ -435,25 +435,25 @@ export default function AdminProductsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Sabor *</label>
-                <input type="text" value={flavorForm.name} onChange={(e) => setFlavorForm({...flavorForm, name: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                <input type="text" value={flavorForm.name} onChange={(e) => setFlavorForm({...flavorForm, name: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">SKU da Variação *</label>
-                <input type="text" value={flavorForm.sku} onChange={(e) => setFlavorForm({...flavorForm, sku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono" />
+                <input type="text" value={flavorForm.sku} onChange={(e) => setFlavorForm({...flavorForm, sku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Estoque</label>
-                  <input type="number" value={flavorForm.stock} onChange={(e) => setFlavorForm({...flavorForm, stock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                  <input type="number" value={flavorForm.stock} onChange={(e) => setFlavorForm({...flavorForm, stock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Preço Extra (opcional)</label>
-                  <input type="number" step="0.01" value={flavorForm.price ?? ''} onChange={(e) => setFlavorForm({...flavorForm, price: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" placeholder="Ex: 10.00" />
+                  <input type="number" step="0.01" value={flavorForm.price ?? ''} onChange={(e) => setFlavorForm({...flavorForm, price: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" placeholder="Ex: 10.00" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">URL da Imagem (opcional)</label>
-                <input type="text" value={flavorForm.imageUrl} onChange={(e) => setFlavorForm({...flavorForm, imageUrl: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm" />
+                <input type="text" value={flavorForm.imageUrl} onChange={(e) => setFlavorForm({...flavorForm, imageUrl: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
               </div>
               <div>
                 <label className="flex items-center gap-2 cursor-pointer">
