@@ -51,89 +51,52 @@ export async function getProducts(params?: {
       orderBy: { createdAt: 'desc' },
     });
 
-    if (dbProducts && dbProducts.length > 0) {
-      return dbProducts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        slug: p.slug,
-        brand: p.brand,
-        categoryId: p.categoryId,
-        category: p.category
-          ? {
-              id: p.category.id,
-              name: p.category.name,
-              slug: p.category.slug,
-              icon: p.category.icon,
-              imageUrl: p.category.imageUrl,
-              color: p.category.color,
-              displayOrder: p.category.displayOrder,
-              active: p.category.active,
-            }
-          : undefined,
-        description: p.description,
-        basePrice: p.basePrice,
-        basePromoPrice: p.basePromoPrice,
-        hasFlavors: p.hasFlavors,
-        baseStock: p.baseStock,
-        baseSku: p.baseSku,
-        internalCode: p.internalCode,
-        mainImageUrl: p.mainImageUrl,
-        gallery: (p.gallery as string[]) || [],
-        weight: p.weight,
-        active: p.active,
-        flavors: p.flavors.map((f) => ({
-          id: f.id,
-          productId: f.productId,
-          name: f.name,
-          imageUrl: f.imageUrl,
-          price: f.price,
-          stock: f.stock,
-          sku: f.sku,
-          description: f.description,
-          displayOrder: f.displayOrder,
-          active: f.active,
-        })),
-      }));
-    }
+    return dbProducts.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      brand: p.brand,
+      categoryId: p.categoryId,
+      category: p.category
+        ? {
+            id: p.category.id,
+            name: p.category.name,
+            slug: p.category.slug,
+            icon: p.category.icon,
+            imageUrl: p.category.imageUrl,
+            color: p.category.color,
+            displayOrder: p.category.displayOrder,
+            active: p.category.active,
+          }
+        : undefined,
+      description: p.description,
+      basePrice: p.basePrice,
+      basePromoPrice: p.basePromoPrice,
+      hasFlavors: p.hasFlavors,
+      baseStock: p.baseStock,
+      baseSku: p.baseSku,
+      internalCode: p.internalCode,
+      mainImageUrl: p.mainImageUrl,
+      gallery: (p.gallery as string[]) || [],
+      weight: p.weight,
+      active: p.active,
+      flavors: p.flavors.map((f) => ({
+        id: f.id,
+        productId: f.productId,
+        name: f.name,
+        imageUrl: f.imageUrl,
+        price: f.price,
+        stock: f.stock,
+        sku: f.sku,
+        description: f.description,
+        displayOrder: f.displayOrder,
+        active: f.active,
+      })),
+    }));
   } catch (err) {
-    console.warn('Database offline or empty, returning mock products fallback');
+    console.error('Database query failed for products:', err);
+    return [];
   }
-
-  // Fallback to mock dataset with memory filtering
-  let filtered = [...mockProducts];
-
-  if (params?.categorySlug) {
-    filtered = filtered.filter((p) => p.category?.slug === params.categorySlug);
-  }
-
-  if (params?.search) {
-    const s = params.search.toLowerCase();
-    filtered = filtered.filter(
-      (p) =>
-        p.name.toLowerCase().includes(s) ||
-        p.brand.toLowerCase().includes(s) ||
-        p.description.toLowerCase().includes(s) ||
-        p.flavors?.some((f) => f.name.toLowerCase().includes(s))
-    );
-  }
-
-  if (params?.brand) {
-    filtered = filtered.filter((p) => p.brand.toLowerCase() === params.brand?.toLowerCase());
-  }
-
-  if (params?.promoOnly) {
-    filtered = filtered.filter((p) => p.basePromoPrice !== null && p.basePromoPrice !== undefined);
-  }
-
-  if (params?.minPrice) {
-    filtered = filtered.filter((p) => (p.basePromoPrice ?? p.basePrice) >= params.minPrice!);
-  }
-
-  if (params?.maxPrice) {
-    filtered = filtered.filter((p) => (p.basePromoPrice ?? p.basePrice) <= params.maxPrice!);
-  }
-
-  return filtered;
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductData | null> {
@@ -193,12 +156,11 @@ export async function getProductBySlug(slug: string): Promise<ProductData | null
         })),
       };
     }
+    return null;
   } catch (err) {
-    console.warn('Database query failed for slug, falling back to mockProducts');
+    console.error('Database query failed for slug:', err);
+    return null;
   }
-
-  const mockItem = mockProducts.find((p) => p.slug === slug);
-  return mockItem || null;
 }
 
 export async function duplicateProduct(productId: string) {

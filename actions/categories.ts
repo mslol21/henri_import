@@ -16,22 +16,19 @@ export async function getCategories(): Promise<CategoryData[]> {
       orderBy: { displayOrder: 'asc' },
     });
 
-    if (categories && categories.length > 0) {
-      return categories.map((c) => ({
-        id: c.id,
-        name: c.name,
-        slug: c.slug,
-        icon: c.icon,
-        imageUrl: c.imageUrl,
-        color: c.color,
-        displayOrder: c.displayOrder,
-        active: c.active,
-        productCount: c._count.products,
-      }));
-    }
+    return categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      icon: c.icon,
+      imageUrl: c.imageUrl,
+      color: c.color,
+      displayOrder: c.displayOrder,
+      active: c.active,
+      productCount: c._count.products,
+    }));
   } catch (err) {
-    console.warn('Database query failed for categories, using mock categories fallback');
+    console.error('Database query failed for categories:', err);
+    return [];
   }
-
-  return mockCategories;
 }
