@@ -29,46 +29,16 @@ const adminNav = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (pathname === '/admin/login') {
-      setIsAuthenticated(true);
-      return;
-    }
-
-    // Check authentication token
-    const authStorage = typeof window !== 'undefined' ? localStorage.getItem('henri_admin_auth') : null;
-    const authCookie = typeof window !== 'undefined' ? document.cookie.includes('henri_admin_auth=true') : false;
-
-    if (!authStorage && !authCookie) {
-      setIsAuthenticated(false);
-      router.push('/admin/login');
-    } else {
-      setIsAuthenticated(true);
-    }
-  }, [pathname, router]);
 
   // If on login page, render without sidebar layout
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
 
-  // Show loading skeleton while checking credentials
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-        <div className="flex items-center gap-3 text-xs font-bold text-sky-400">
-          <Lock className="h-5 w-5 animate-pulse" />
-          <span>Verificando permissões de acesso...</span>
-        </div>
-      </div>
-    );
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('henri_admin_auth');
-    document.cookie = 'henri_admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch (e) {}
     router.push('/admin/login');
   };
 
