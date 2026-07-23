@@ -13,24 +13,32 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // Simple secure authentication check
-    setTimeout(() => {
-      // Default initial admin credentials or custom login
-      if ((email === 'admin@henriimports.com.br' || email === 'admin') && password === 'admin123') {
-        localStorage.setItem('henri_admin_auth', 'true');
-        document.cookie = 'henri_admin_auth=true; path=/; max-age=86400';
-        setLoading(false);
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        // Sucesso: a API vai setar o cookie HttpOnly
+        // Limpamos o localStorage antigo se existir
+        localStorage.removeItem('henri_admin_auth');
         router.push('/admin');
       } else {
-        setLoading(false);
-        setError('E-mail ou senha incorretos. Utilize admin@henriimports.com.br e senha admin123');
+        const data = await res.json();
+        setError(data.error || 'E-mail ou senha incorretos.');
       }
-    }, 600);
+    } catch (err) {
+      setError('Erro de conexão. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,8 +65,8 @@ export default function AdminLoginPage() {
             <div className="relative">
               <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
               <input
-                type="text"
-                placeholder="admin@henriimports.com.br"
+                type="email"
+                placeholder="Seu e-mail..."
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800 py-2.5 pl-10 pr-3 text-xs text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"
@@ -91,7 +99,6 @@ export default function AdminLoginPage() {
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
-
 
       </div>
     </div>
