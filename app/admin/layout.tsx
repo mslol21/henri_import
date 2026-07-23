@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   ExternalLink,
+  Lock,
 } from 'lucide-react';
 
 const adminNav = [
@@ -27,11 +28,49 @@ const adminNav = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  // If on login page, render without sidebar
+  useEffect(() => {
+    if (pathname === '/admin/login') {
+      setIsAuthenticated(true);
+      return;
+    }
+
+    // Check authentication token
+    const authStorage = typeof window !== 'undefined' ? localStorage.getItem('henri_admin_auth') : null;
+    const authCookie = typeof window !== 'undefined' ? document.cookie.includes('henri_admin_auth=true') : false;
+
+    if (!authStorage && !authCookie) {
+      setIsAuthenticated(false);
+      router.push('/admin/login');
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [pathname, router]);
+
+  // If on login page, render without sidebar layout
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
+
+  // Show loading skeleton while checking credentials
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+        <div className="flex items-center gap-3 text-xs font-bold text-sky-400">
+          <Lock className="h-5 w-5 animate-pulse" />
+          <span>Verificando permissões de acesso...</span>
+        </div>
+      </div>
+    );
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('henri_admin_auth');
+    document.cookie = 'henri_admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    router.push('/admin/login');
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col md:flex-row">
@@ -83,13 +122,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <ExternalLink className="h-3.5 w-3.5" />
           </Link>
 
-          <Link
-            href="/admin/login"
+          <button
+            onClick={handleLogout}
             className="flex items-center gap-2 w-full px-3.5 py-2 rounded-xl text-red-400 text-xs font-semibold hover:bg-red-500/10 transition-colors"
           >
             <LogOut className="h-3.5 w-3.5" />
             <span>Sair do Painel</span>
-          </Link>
+          </button>
         </div>
       </aside>
 

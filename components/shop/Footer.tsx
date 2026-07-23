@@ -3,13 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { useConfig } from '@/contexts/ConfigContext';
-import { MapPin, Phone, Clock, ExternalLink, ShieldCheck, Heart } from 'lucide-react';
+import { Phone, Clock, ShieldCheck, Heart } from 'lucide-react';
 
 export function Footer() {
   const { config } = useConfig();
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    config.address
-  )}`;
+  const cleanWhatsapp = config.whatsapp.replace(/\D/g, '');
 
   return (
     <footer className="relative bg-white/85 backdrop-blur-xs border-t border-sky-100 text-slate-700 overflow-hidden">
@@ -25,7 +23,7 @@ export function Footer() {
               <img src="/logo.png" alt={config.name} className="h-full w-auto object-contain max-h-12" />
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
-              Sua tabacaria e vape shop de confiança. Produtos 100% autênticos com o melhor preço e entrega expressa na região.
+              Sua tabacaria e vape shop de confiança. Produtos 100% autênticos com o melhor preço e atendimento direto via WhatsApp.
             </p>
             <div className="flex items-center gap-2 text-xs font-bold text-sky-700 bg-sky-50 px-3 py-1.5 rounded-full border border-sky-200 inline-flex">
               <ShieldCheck className="h-4 w-4 text-sky-600" />
@@ -70,36 +68,22 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Col 3: Geolocation & Address */}
+          {/* Col 3: WhatsApp Contact (No physical address/maps) */}
           <div className="space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Localização & Contato</h3>
-            <div className="space-y-2.5 text-xs text-slate-600">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
-                <span>{config.address}</span>
-              </div>
-              <a
-                href={mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors"
-              >
-                <span>Ver no Google Maps</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Atendimento WhatsApp</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Tire dúvidas, consulte disponibilidade de estoque ou faça seu pedido diretamente com a nossa equipe.
+            </p>
 
-              <div className="flex items-center gap-2.5 pt-1">
-                <Phone className="h-4 w-4 text-emerald-600 shrink-0" />
-                <a
-                  href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-slate-900 hover:text-emerald-600 transition-colors"
-                >
-                  {config.whatsapp}
-                </a>
-              </div>
-            </div>
+            <a
+              href={`https://wa.me/${cleanWhatsapp}?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20Henri%20Imports%20e%20gostaria%20de%20tirar%20uma%20d%C3%BAvida.`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 rounded-2xl bg-emerald-600 px-4 py-3 text-xs font-extrabold text-white shadow-md hover:bg-emerald-500 transition-all hover:scale-105"
+            >
+              <Phone className="h-4 w-4 fill-current" />
+              <span>Chamar no WhatsApp ({config.whatsapp})</span>
+            </a>
           </div>
 
           {/* Col 4: Business Hours */}
@@ -110,7 +94,7 @@ export function Footer() {
               <div>
                 <p className="font-semibold text-slate-900">{config.businessHours}</p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Pedidos online via WhatsApp entregues via Delivery Express.
+                  Atendimento e pedidos online 100% via WhatsApp.
                 </p>
               </div>
             </div>
