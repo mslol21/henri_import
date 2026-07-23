@@ -92,11 +92,7 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-800 text-[11px] text-center text-slate-400 space-y-1">
-          <p className="font-bold text-slate-300">Credenciais de Acesso Inicial:</p>
-          <p>E-mail: <code className="text-sky-300">admin@henriimports.com.br</code></p>
-          <p>Senha: <code className="text-sky-300">admin123</code></p>
-        </div>
+
       </div>
     </div>
   );
