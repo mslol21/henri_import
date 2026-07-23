@@ -7,6 +7,7 @@ import {
   Tag, BarChart, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { ImageUploadInput } from '@/components/admin/ImageUploadInput';
 
 interface FlavorData {
   id: string;
@@ -383,8 +384,12 @@ export default function AdminProductsPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">URL da Imagem Principal *</label>
-                <input type="text" placeholder="https://..." value={productForm.mainImageUrl} onChange={(e) => setProductForm({...productForm, mainImageUrl: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
+                <ImageUploadInput
+                  label="Imagem Principal do Produto *"
+                  value={productForm.mainImageUrl}
+                  onChange={(url) => setProductForm({...productForm, mainImageUrl: url})}
+                  bucket="products"
+                />
               </div>
 
               <div className="md:col-span-2">
@@ -452,8 +457,12 @@ export default function AdminProductsPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">URL da Imagem (opcional)</label>
-                <input type="text" value={flavorForm.imageUrl} onChange={(e) => setFlavorForm({...flavorForm, imageUrl: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
+                <ImageUploadInput
+                  label="Imagem do Sabor (opcional)"
+                  value={flavorForm.imageUrl || ''}
+                  onChange={(url) => setFlavorForm({...flavorForm, imageUrl: url})}
+                  bucket="products"
+                />
               </div>
               <div>
                 <label className="flex items-center gap-2 cursor-pointer">
