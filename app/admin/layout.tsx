@@ -16,6 +16,8 @@ import {
   Lock,
 } from 'lucide-react';
 
+import WholesaleShareModal from '@/components/admin/WholesaleShareModal';
+
 const adminNav = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Produtos & Sabores', href: '/admin/products', icon: Package },
@@ -83,6 +85,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-slate-800 space-y-2">
+          <WholesaleShareModal variant="sidebar" />
+
           <Link
             href="/"
             target="_blank"

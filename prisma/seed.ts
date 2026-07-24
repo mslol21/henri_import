@@ -30,6 +30,7 @@ async function main() {
       ]),
       pixKey: '11999999999',
       pixName: 'Henri Imports LTDA',
+      wholesalePassword: 'ATACADO2026',
     },
     create: {
       id: 'default',
@@ -56,6 +57,7 @@ async function main() {
       ]),
       pixKey: '11999999999',
       pixName: 'Henri Imports LTDA',
+      wholesalePassword: 'ATACADO2026',
     },
   });
 

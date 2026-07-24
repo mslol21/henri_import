@@ -21,6 +21,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import WholesaleShareModal from '@/components/admin/WholesaleShareModal';
 
 interface DashboardStats {
   ordersToday: number;
@@ -76,15 +77,22 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Title */}
-      <div>
-        <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
-          VISÃO GERAL DO NEGÓCIO
-        </span>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight sm:text-3xl mt-0.5">
-          Dashboard Executivo
-        </h1>
+      {/* Header with Title & Wholesale Share Shortcut */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-sky-600">
+            VISÃO GERAL DO NEGÓCIO
+          </span>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight sm:text-3xl mt-0.5">
+            Dashboard Executivo
+          </h1>
+        </div>
+
+        <WholesaleShareModal variant="button" />
       </div>
+
+      {/* Wholesale Banner Card */}
+      <WholesaleShareModal variant="card" />
 
       {/* Top 4 Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
