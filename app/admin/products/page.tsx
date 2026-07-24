@@ -54,7 +54,7 @@ interface CategoryData {
 const emptyProductForm = {
   name: '', slug: '', brand: '', categoryId: '', description: '',
   basePrice: 0, basePromoPrice: null as number | null,
-  wholesalePrice: null as number | null, minWholesaleQty: 10,
+  wholesalePrice: null as number | null, minWholesaleQty: null as number | null,
   hasFlavors: false,
   baseStock: 0, baseSku: '', internalCode: '', mainImageUrl: '',
   weight: 0, active: true
@@ -136,7 +136,7 @@ export default function AdminProductsPage() {
     setProductForm({
       name: p.name, slug: p.slug, brand: p.brand, categoryId: p.categoryId,
       description: p.description, basePrice: p.basePrice, basePromoPrice: p.basePromoPrice,
-      wholesalePrice: p.wholesalePrice, minWholesaleQty: p.minWholesaleQty,
+      wholesalePrice: p.wholesalePrice ?? null, minWholesaleQty: p.minWholesaleQty ?? null,
       hasFlavors: p.hasFlavors, baseStock: p.baseStock, baseSku: p.baseSku,
       internalCode: p.internalCode || '', mainImageUrl: p.mainImageUrl,
       weight: p.weight, active: p.active
