@@ -11,6 +11,8 @@ import {
   CheckCircle,
   Lock,
   AlertCircle,
+  Loader2,
+  Search,
 } from 'lucide-react';
 
 export default function SettingsForm({ initialConfig }: { initialConfig: StoreConfigData }) {
@@ -18,9 +20,66 @@ export default function SettingsForm({ initialConfig }: { initialConfig: StoreCo
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState<string | null>(null);
 
   const handleChange = (field: keyof StoreConfigData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCepLookup = async (cepRaw: string) => {
+    const cep = cepRaw.replace(/\D/g, '');
+    if (cep.length !== 8) return;
+
+    setCepLoading(true);
+    setCepError(null);
+
+    try {
+      // 1. Lookup address via ViaCEP
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+
+      if (data.erro) {
+        setCepError('CEP não encontrado.');
+        return;
+      }
+
+      // Build full address string
+      const fullAddress = [
+        data.logradouro,
+        data.bairro,
+        data.localidade,
+        data.uf,
+      ].filter(Boolean).join(', ');
+
+      setFormData((prev) => ({
+        ...prev,
+        address: fullAddress,
+        cep: cepRaw,
+      }));
+
+      // 2. Try geocoding to get lat/lng via Nominatim (OpenStreetMap)
+      try {
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullAddress + ', Brasil')}&format=json&limit=1`,
+          { headers: { 'Accept-Language': 'pt-BR' } }
+        );
+        const geoData = await geoRes.json();
+        if (geoData && geoData.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            latitude: parseFloat(geoData[0].lat),
+            longitude: parseFloat(geoData[0].lon),
+          }));
+        }
+      } catch {
+        // Geocoding failed silently — address is still filled
+      }
+    } catch (err) {
+      setCepError('Erro ao buscar CEP. Tente novamente.');
+    } finally {
+      setCepLoading(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -165,30 +224,57 @@ export default function SettingsForm({ initialConfig }: { initialConfig: StoreCo
             <span>Endereço da Loja &amp; Geolocalização</span>
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2">
+          {/* CEP lookup first */}
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                CEP de Origem
+                <span className="ml-1 text-purple-600 font-normal">(preencha para buscar endereço automaticamente)</span>
+              </label>
+              <input
+                type="text"
+                value={formData.cep}
+                onChange={(e) => handleChange('cep', e.target.value)}
+                onBlur={(e) => handleCepLookup(e.target.value)}
+                placeholder="00000-000"
+                maxLength={9}
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 font-mono focus:border-purple-600 focus:outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => handleCepLookup(formData.cep)}
+              disabled={cepLoading}
+              className="flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-700 transition-all disabled:opacity-60 shrink-0"
+            >
+              {cepLoading ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando...</>
+              ) : (
+                <><Search className="h-3.5 w-3.5" /> Buscar CEP</>
+              )}
+            </button>
+          </div>
+
+          {cepError && (
+            <p className="text-xs text-red-600 font-semibold">{cepError}</p>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
+            <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Endereço Completo</label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={(e) => handleChange('address', e.target.value)}
+                placeholder="Preenchido automaticamente ao buscar o CEP"
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:border-purple-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">CEP de Origem</label>
-              <input
-                type="text"
-                value={formData.cep}
-                onChange={(e) => handleChange('cep', e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 font-mono focus:border-purple-600 focus:outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Latitude</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Latitude <span className="text-slate-400 font-normal">(preenchida automaticamente)</span></label>
               <input
                 type="number"
                 step="any"
