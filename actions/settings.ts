@@ -45,38 +45,58 @@ export async function getStoreConfig(): Promise<StoreConfigData> {
 
 export async function updateStoreConfig(data: Partial<StoreConfigData>) {
   try {
+    // Remove 'id' — Prisma can't update the primary key
+    const { id, ...rest } = data as any;
+
+    const updateData: Record<string, any> = {};
+    const allowedFields = [
+      'name', 'logoUrl', 'bannerUrl', 'primaryColor', 'secondaryColor', 'textColor',
+      'whatsapp', 'instagram', 'facebook', 'address', 'latitude', 'longitude', 'cep',
+      'businessHours', 'deliveryMode', 'deliveryKmRate', 'pixKey', 'pixName',
+      'whatsappTemplate', 'wholesalePassword',
+    ];
+
+    for (const key of allowedFields) {
+      if (rest[key] !== undefined) {
+        updateData[key] = rest[key];
+      }
+    }
+
+    // deliveryRanges needs special handling (Json field)
+    if (rest.deliveryRanges !== undefined) {
+      updateData.deliveryRanges = rest.deliveryRanges as any;
+    }
+
     const updated = await db.storeConfig.upsert({
       where: { id: 'default' },
-      update: {
-        ...data,
-        deliveryRanges: data.deliveryRanges ? (data.deliveryRanges as any) : undefined,
-      },
+      update: updateData,
       create: {
         id: 'default',
-        name: data.name || mockConfig.name,
-        logoUrl: data.logoUrl || mockConfig.logoUrl,
-        bannerUrl: data.bannerUrl || mockConfig.bannerUrl,
-        primaryColor: data.primaryColor || mockConfig.primaryColor,
-        secondaryColor: data.secondaryColor || mockConfig.secondaryColor,
-        textColor: data.textColor || mockConfig.textColor,
-        whatsapp: data.whatsapp || mockConfig.whatsapp,
-        address: data.address || mockConfig.address,
-        latitude: data.latitude ?? mockConfig.latitude,
-        longitude: data.longitude ?? mockConfig.longitude,
-        cep: data.cep || mockConfig.cep,
-        businessHours: data.businessHours || mockConfig.businessHours,
-        deliveryMode: data.deliveryMode || mockConfig.deliveryMode,
-        deliveryKmRate: data.deliveryKmRate ?? mockConfig.deliveryKmRate,
-        deliveryRanges: (data.deliveryRanges as any) || mockConfig.deliveryRanges,
-        pixKey: data.pixKey,
-        pixName: data.pixName,
-        whatsappTemplate: data.whatsappTemplate || mockConfig.whatsappTemplate,
-        wholesalePassword: data.wholesalePassword,
+        name: rest.name || mockConfig.name,
+        logoUrl: rest.logoUrl || mockConfig.logoUrl,
+        bannerUrl: rest.bannerUrl || mockConfig.bannerUrl,
+        primaryColor: rest.primaryColor || mockConfig.primaryColor,
+        secondaryColor: rest.secondaryColor || mockConfig.secondaryColor,
+        textColor: rest.textColor || mockConfig.textColor,
+        whatsapp: rest.whatsapp || mockConfig.whatsapp,
+        address: rest.address || mockConfig.address,
+        latitude: rest.latitude ?? mockConfig.latitude,
+        longitude: rest.longitude ?? mockConfig.longitude,
+        cep: rest.cep || mockConfig.cep,
+        businessHours: rest.businessHours || mockConfig.businessHours,
+        deliveryMode: rest.deliveryMode || mockConfig.deliveryMode,
+        deliveryKmRate: rest.deliveryKmRate ?? mockConfig.deliveryKmRate,
+        deliveryRanges: (rest.deliveryRanges as any) || mockConfig.deliveryRanges,
+        pixKey: rest.pixKey,
+        pixName: rest.pixName,
+        whatsappTemplate: rest.whatsappTemplate || mockConfig.whatsappTemplate,
+        wholesalePassword: rest.wholesalePassword,
       },
     });
 
     return { success: true, config: updated };
   } catch (err: any) {
+    console.error('updateStoreConfig error:', err);
     return { success: false, error: err.message };
   }
 }

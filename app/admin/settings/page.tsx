@@ -21,6 +21,7 @@ export default function AdminSettingsPage() {
   const [formData, setFormData] = useState<StoreConfigData>(config);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleChange = (field: keyof StoreConfigData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -29,6 +30,7 @@ export default function AdminSettingsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveError(null);
 
     const res = await updateStoreConfig(formData);
     setSaving(false);
@@ -37,6 +39,8 @@ export default function AdminSettingsPage() {
       updateConfig(formData);
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
+    } else {
+      setSaveError(res.error || 'Erro desconhecido ao salvar configurações.');
     }
   };
 
@@ -58,6 +62,12 @@ export default function AdminSettingsPage() {
         <div className="p-4 rounded-2xl bg-emerald-600 text-white text-xs font-extrabold flex items-center gap-2 shadow-lg animate-bounce">
           <CheckCircle className="h-5 w-5" />
           <span>Configurações salvas e aplicadas a toda a loja com sucesso!</span>
+        </div>
+      )}
+
+      {saveError && (
+        <div className="p-4 rounded-2xl bg-red-600 text-white text-xs font-extrabold flex items-center gap-2 shadow-lg">
+          <span>❌ Erro ao salvar: {saveError}</span>
         </div>
       )}
 
