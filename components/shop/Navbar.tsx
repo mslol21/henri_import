@@ -65,6 +65,14 @@ export function Navbar() {
 
         {/* Actions Right */}
         <div className="flex items-center gap-3">
+          {/* Wholesale Button */}
+          <Link
+            href="/atacado"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-50 px-3.5 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-600 hover:text-white transition-all shadow-xs"
+          >
+            <span>Atacado B2B</span>
+          </Link>
+
           {/* WhatsApp Button */}
           <a
             href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`}
@@ -161,6 +169,14 @@ export function Navbar() {
               className="px-3 py-2 rounded-lg hover:bg-sky-50"
             >
               Narguilés
+            </Link>
+
+            <Link
+              href="/atacado"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2 text-xs font-semibold text-purple-600 uppercase tracking-wider hover:bg-purple-50 rounded-lg mt-2 border-t border-slate-100 pt-3"
+            >
+              Área do Atacado (B2B)
             </Link>
 
             <Link

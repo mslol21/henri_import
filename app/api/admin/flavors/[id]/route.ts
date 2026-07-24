@@ -10,6 +10,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.name !== undefined) updateData.name = body.name;
     if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl;
     if (body.price !== undefined) updateData.price = body.price === null ? null : Number(body.price);
+    if (body.wholesalePrice !== undefined) updateData.wholesalePrice = body.wholesalePrice === null ? null : Number(body.wholesalePrice);
     if (body.stock !== undefined) updateData.stock = Number(body.stock);
     if (body.sku !== undefined) updateData.sku = body.sku;
     if (body.description !== undefined) updateData.description = body.description;

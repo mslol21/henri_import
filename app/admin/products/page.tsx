@@ -15,6 +15,7 @@ interface FlavorData {
   name: string;
   imageUrl: string | null;
   price: number | null;
+  wholesalePrice: number | null;
   stock: number;
   sku: string;
   description: string | null;
@@ -31,6 +32,8 @@ interface ProductData {
   description: string;
   basePrice: number;
   basePromoPrice: number | null;
+  wholesalePrice: number | null;
+  minWholesaleQty: number | null;
   hasFlavors: boolean;
   baseStock: number;
   baseSku: string;
@@ -50,13 +53,15 @@ interface CategoryData {
 
 const emptyProductForm = {
   name: '', slug: '', brand: '', categoryId: '', description: '',
-  basePrice: 0, basePromoPrice: null as number | null, hasFlavors: false,
+  basePrice: 0, basePromoPrice: null as number | null,
+  wholesalePrice: null as number | null, minWholesaleQty: 10,
+  hasFlavors: false,
   baseStock: 0, baseSku: '', internalCode: '', mainImageUrl: '',
   weight: 0, active: true
 };
 
 const emptyFlavorForm = {
-  name: '', imageUrl: '', price: null as number | null, stock: 0,
+  name: '', imageUrl: '', price: null as number | null, wholesalePrice: null as number | null, stock: 0,
   sku: '', description: '', active: true, displayOrder: 0
 };
 
@@ -131,6 +136,7 @@ export default function AdminProductsPage() {
     setProductForm({
       name: p.name, slug: p.slug, brand: p.brand, categoryId: p.categoryId,
       description: p.description, basePrice: p.basePrice, basePromoPrice: p.basePromoPrice,
+      wholesalePrice: p.wholesalePrice, minWholesaleQty: p.minWholesaleQty,
       hasFlavors: p.hasFlavors, baseStock: p.baseStock, baseSku: p.baseSku,
       internalCode: p.internalCode || '', mainImageUrl: p.mainImageUrl,
       weight: p.weight, active: p.active
@@ -187,7 +193,7 @@ export default function AdminProductsPage() {
     setParentProductId(productId);
     setEditingFlavor(f.id);
     setFlavorForm({
-      name: f.name, imageUrl: f.imageUrl || '', price: f.price,
+      name: f.name, imageUrl: f.imageUrl || '', price: f.price, wholesalePrice: f.wholesalePrice,
       stock: f.stock, sku: f.sku, description: f.description || '',
       active: f.active, displayOrder: f.displayOrder
     });
@@ -379,6 +385,22 @@ export default function AdminProductsPage() {
               </div>
 
               <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Preço Promocional (R$)</label>
+                <input type="number" step="0.01" value={productForm.basePromoPrice ?? ''} onChange={(e) => setProductForm({...productForm, basePromoPrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
+              </div>
+
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-purple-50 rounded-2xl border border-purple-100">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 text-purple-900">Preço de Atacado (R$)</label>
+                  <input type="number" step="0.01" value={productForm.wholesalePrice ?? ''} onChange={(e) => setProductForm({...productForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500" placeholder="Ex: 50.00" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1 text-purple-900">Qtd Mín. Atacado</label>
+                  <input type="number" value={productForm.minWholesaleQty ?? ''} onChange={(e) => setProductForm({...productForm, minWholesaleQty: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500" placeholder="Ex: 10" />
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">SKU Base *</label>
                 <input type="text" value={productForm.baseSku} onChange={(e) => setProductForm({...productForm, baseSku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900" />
               </div>
@@ -452,8 +474,12 @@ export default function AdminProductsPage() {
                   <input type="number" value={flavorForm.stock} onChange={(e) => setFlavorForm({...flavorForm, stock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Preço Extra (opcional)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Preço Varejo Especial</label>
                   <input type="number" step="0.01" value={flavorForm.price ?? ''} onChange={(e) => setFlavorForm({...flavorForm, price: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" placeholder="Ex: 10.00" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-purple-900 mb-1">Preço Atacado Especial</label>
+                  <input type="number" step="0.01" value={flavorForm.wholesalePrice ?? ''} onChange={(e) => setFlavorForm({...flavorForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500" placeholder="Caso este sabor tenha preço diferente no atacado" />
                 </div>
               </div>
               <div>

@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { productId, name, imageUrl, price, stock, sku, description, displayOrder, active } = body;
+    const { productId, name, imageUrl, price, wholesalePrice, stock, sku, description, displayOrder, active } = body;
 
     if (!productId || !name || !sku) {
       return NextResponse.json({ error: 'Produto, nome e SKU são obrigatórios' }, { status: 400 });
@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
         name,
         imageUrl: imageUrl || null,
         price: price ? Number(price) : null,
+        wholesalePrice: wholesalePrice ? Number(wholesalePrice) : null,
         stock: Number(stock || 0),
         sku,
         description: description || null,

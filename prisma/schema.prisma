@@ -69,6 +69,7 @@ model StoreConfig {
   pixKey            String?
   pixName           String?
   whatsappTemplate  String       @default("Novo Pedido Henri Imports...")
+  wholesalePassword String?      // Password to unlock wholesale prices
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 }
@@ -95,9 +96,11 @@ model Product {
   categoryId     String
   category       Category        @relation(fields: [categoryId], references: [id])
   description    String          @db.Text
-  basePrice      Float
-  basePromoPrice Float?
-  hasFlavors     Boolean         @default(false)
+  basePrice       Float
+  basePromoPrice  Float?
+  wholesalePrice  Float?
+  minWholesaleQty Int?            @default(10)
+  hasFlavors      Boolean         @default(false)
   baseStock      Int             @default(0)
   baseSku        String          @unique
   internalCode   String?
@@ -119,6 +122,7 @@ model Flavor {
   name           String
   imageUrl       String?
   price          Float?          // If null, falls back to product price
+  wholesalePrice Float?          // If null, falls back to product wholesale price
   stock          Int             @default(0)
   sku            String          @unique
   description    String?

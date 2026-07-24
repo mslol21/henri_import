@@ -20,6 +20,7 @@ export interface StoreConfigData {
   pixKey?: string | null;
   pixName?: string | null;
   whatsappTemplate: string;
+  wholesalePassword?: string | null;
 }
 
 export interface CategoryData {
@@ -40,6 +41,7 @@ export interface FlavorData {
   name: string;
   imageUrl?: string | null;
   price?: number | null;
+  wholesalePrice?: number | null;
   stock: number;
   sku: string;
   description?: string | null;
@@ -57,6 +59,8 @@ export interface ProductData {
   description: string;
   basePrice: number;
   basePromoPrice?: number | null;
+  wholesalePrice?: number | null;
+  minWholesaleQty?: number | null;
   hasFlavors: boolean;
   baseStock: number;
   baseSku: string;
@@ -75,6 +79,7 @@ export interface CartItem {
   quantity: number;
   unitPrice: number;
   notes?: string;
+  minQty?: number;
 }
 
 export interface PromotionData {

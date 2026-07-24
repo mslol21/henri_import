@@ -7,7 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { ShoppingBag, Check, Sparkles, ShieldCheck, AlertCircle, Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function FlavorSelector({ product }: { product: ProductData }) {
+export function FlavorSelector({ product, isWholesale }: { product: ProductData; isWholesale?: boolean }) {
   const { addToCart } = useCart();
 
   // Initial selected flavor defaults to the first active flavor if available
@@ -15,19 +15,42 @@ export function FlavorSelector({ product }: { product: ProductData }) {
     ? product.flavors[0]
     : null;
 
+  // Wholesale Price Computations
+  const baseOrPromo = product.basePromoPrice ?? product.basePrice;
+  let defaultActivePrice = baseOrPromo;
+  let isWholesalePriceApplied = false;
+
+  if (isWholesale && product.wholesalePrice && product.wholesalePrice < baseOrPromo) {
+    defaultActivePrice = product.wholesalePrice;
+    isWholesalePriceApplied = true;
+  }
+
+  const getFlavorPrice = (f: FlavorData) => {
+    let p = f.price ?? baseOrPromo;
+    if (isWholesale && f.wholesalePrice && f.wholesalePrice < p) {
+      return f.wholesalePrice;
+    }
+    if (isWholesale && !f.wholesalePrice && !f.price && isWholesalePriceApplied) {
+      return defaultActivePrice;
+    }
+    return p;
+  };
+
+  const minQty = isWholesalePriceApplied && product.minWholesaleQty ? product.minWholesaleQty : 1;
+
   const [selectedFlavor, setSelectedFlavor] = useState<FlavorData | null>(initialFlavor);
-  const [quantity, setQuantity] = useState<number>(1);
+  const [quantity, setQuantity] = useState<number>(minQty);
   const [notes, setNotes] = useState<string>('');
   const [addedToast, setAddedToast] = useState<boolean>(false);
 
   // Computed values
   const activeImage = selectedFlavor?.imageUrl || product.mainImageUrl;
-  const activePrice = selectedFlavor?.price ?? product.basePromoPrice ?? product.basePrice;
+  const activePrice = selectedFlavor ? getFlavorPrice(selectedFlavor) : defaultActivePrice;
   const activeStock = selectedFlavor ? selectedFlavor.stock : product.baseStock;
   const activeSku = selectedFlavor ? selectedFlavor.sku : product.baseSku;
 
   const handleAddToCart = () => {
-    addToCart(product, selectedFlavor, quantity, notes);
+    addToCart(product, selectedFlavor, quantity, notes, activePrice, minQty);
     setAddedToast(true);
     setTimeout(() => setAddedToast(false), 2500);
   };
@@ -104,9 +127,20 @@ export function FlavorSelector({ product }: { product: ProductData }) {
             <span className="text-3xl font-black text-slate-900">
               {formatCurrency(activePrice)}
             </span>
-            {product.basePromoPrice && (
+            {product.basePromoPrice && !isWholesalePriceApplied && (
               <span className="text-sm text-slate-400 line-through">
                 {formatCurrency(product.basePrice)}
+              </span>
+            )}
+            {isWholesalePriceApplied && (
+              <span className="text-sm text-slate-400 line-through">
+                {formatCurrency(baseOrPromo)}
+              </span>
+            )}
+
+            {isWholesalePriceApplied && (
+              <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-black text-purple-700 border border-purple-200 uppercase tracking-wider">
+                ATACADO
               </span>
             )}
 
@@ -192,7 +226,7 @@ export function FlavorSelector({ product }: { product: ProductData }) {
             <div className="flex items-center rounded-xl border border-slate-300 bg-white p-1">
               <button
                 type="button"
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                onClick={() => setQuantity(Math.max(minQty, quantity - 1))}
                 aria-label="Diminuir quantidade"
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
               >

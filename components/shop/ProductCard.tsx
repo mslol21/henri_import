@@ -7,10 +7,19 @@ import { formatCurrency } from '@/lib/utils';
 import { Sparkles, ShoppingBag, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export function ProductCard({ product }: { product: ProductData }) {
+export function ProductCard({ product, isWholesale }: { product: ProductData; isWholesale?: boolean }) {
   const hasPromo = product.basePromoPrice && product.basePromoPrice < product.basePrice;
-  const currentPrice = product.basePromoPrice ?? product.basePrice;
-  const discountPercent = hasPromo
+  const baseOrPromo = product.basePromoPrice ?? product.basePrice;
+  
+  let currentPrice = baseOrPromo;
+  let isWholesalePriceApplied = false;
+
+  if (isWholesale && product.wholesalePrice && product.wholesalePrice < baseOrPromo) {
+    currentPrice = product.wholesalePrice;
+    isWholesalePriceApplied = true;
+  }
+
+  const discountPercent = hasPromo && !isWholesalePriceApplied
     ? Math.round(((product.basePrice - product.basePromoPrice!) / product.basePrice) * 100)
     : 0;
 
@@ -29,9 +38,23 @@ export function ProductCard({ product }: { product: ProductData }) {
         />
 
         {/* Promo Discount Tag */}
-        {hasPromo && (
+        {hasPromo && !isWholesalePriceApplied && (
           <div className="absolute top-3 left-3 rounded-full bg-sky-600 px-2.5 py-1 text-[11px] font-black text-white shadow-xs">
             -{discountPercent}% OFF
+          </div>
+        )}
+
+        {/* Wholesale Tag */}
+        {isWholesalePriceApplied && (
+          <div className="absolute top-3 left-3 flex flex-col gap-1">
+            <div className="rounded-full bg-purple-600 px-2.5 py-1 text-[11px] font-black text-white shadow-xs w-max">
+              ATACADO
+            </div>
+            {product.minWholesaleQty && product.minWholesaleQty > 1 && (
+              <div className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] font-bold text-purple-800 shadow-xs w-max border border-purple-200">
+                Mín: {product.minWholesaleQty} un.
+              </div>
+            )}
           </div>
         )}
 
@@ -63,9 +86,14 @@ export function ProductCard({ product }: { product: ProductData }) {
           <span className="text-lg font-black text-slate-900">
             {formatCurrency(currentPrice)}
           </span>
-          {hasPromo && (
+          {hasPromo && !isWholesalePriceApplied && (
             <span className="text-xs text-slate-400 line-through">
               {formatCurrency(product.basePrice)}
+            </span>
+          )}
+          {isWholesalePriceApplied && (
+            <span className="text-xs text-slate-400 line-through">
+              {formatCurrency(baseOrPromo)}
             </span>
           )}
         </div>

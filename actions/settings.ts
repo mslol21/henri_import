@@ -33,6 +33,7 @@ export async function getStoreConfig(): Promise<StoreConfigData> {
         pixKey: config.pixKey,
         pixName: config.pixName,
         whatsappTemplate: config.whatsappTemplate,
+        wholesalePassword: config.wholesalePassword,
       };
     }
   } catch (err) {
@@ -70,6 +71,7 @@ export async function updateStoreConfig(data: Partial<StoreConfigData>) {
         pixKey: data.pixKey,
         pixName: data.pixName,
         whatsappTemplate: data.whatsappTemplate || mockConfig.whatsappTemplate,
+        wholesalePassword: data.wholesalePassword,
       },
     });
 

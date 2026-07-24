@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       name, slug, brand, categoryId, description, basePrice,
-      basePromoPrice, hasFlavors, baseStock, baseSku, internalCode,
+      basePromoPrice, wholesalePrice, minWholesaleQty, hasFlavors, baseStock, baseSku, internalCode,
       mainImageUrl, gallery, weight, active
     } = body;
 
@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
         description: description || '',
         basePrice: Number(basePrice),
         basePromoPrice: basePromoPrice ? Number(basePromoPrice) : null,
+        wholesalePrice: wholesalePrice ? Number(wholesalePrice) : null,
+        minWholesaleQty: minWholesaleQty ? Number(minWholesaleQty) : null,
         hasFlavors: Boolean(hasFlavors),
         baseStock: Number(baseStock || 0),
         baseSku,

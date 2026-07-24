@@ -6,10 +6,12 @@ import { getCategories } from '@/actions/categories';
 import { getProducts } from '@/actions/products';
 import { Sparkles, Flame, Tag, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { isWholesaleUser } from '@/lib/auth';
 
 export default async function LandingPage() {
   const categories = await getCategories();
   const allProducts = await getProducts();
+  const isWholesale = await isWholesaleUser();
 
   // Filter sections
   const featuredProducts = allProducts.slice(0, 4);
@@ -46,7 +48,7 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} isWholesale={isWholesale} />
             ))}
           </div>
         </div>
@@ -75,7 +77,7 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {bestSellers.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} isWholesale={isWholesale} />
             ))}
           </div>
         </div>

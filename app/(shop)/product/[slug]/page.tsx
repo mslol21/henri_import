@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Home, ShieldCheck, Truck, RotateCcw } from 'lucide-react';
 
+import { isWholesaleUser } from '@/lib/auth';
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
@@ -12,6 +14,7 @@ interface ProductPageProps {
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+  const isWholesale = await isWholesaleUser();
 
   if (!product) {
     notFound();
@@ -36,7 +39,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
         {/* Product Details Container */}
         <div className="rounded-3xl bg-white p-6 sm:p-10 border border-slate-200/80 shadow-xs">
-          <FlavorSelector product={product} />
+          <FlavorSelector product={product} isWholesale={isWholesale} />
         </div>
 
         {/* Information Badges */}

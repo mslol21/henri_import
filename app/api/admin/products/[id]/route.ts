@@ -14,6 +14,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.description !== undefined) updateData.description = body.description;
     if (body.basePrice !== undefined) updateData.basePrice = Number(body.basePrice);
     if (body.basePromoPrice !== undefined) updateData.basePromoPrice = body.basePromoPrice === null ? null : Number(body.basePromoPrice);
+    if (body.wholesalePrice !== undefined) updateData.wholesalePrice = body.wholesalePrice === null ? null : Number(body.wholesalePrice);
+    if (body.minWholesaleQty !== undefined) updateData.minWholesaleQty = body.minWholesaleQty === null ? null : Number(body.minWholesaleQty);
     if (body.hasFlavors !== undefined) updateData.hasFlavors = Boolean(body.hasFlavors);
     if (body.baseStock !== undefined) updateData.baseStock = Number(body.baseStock);
     if (body.baseSku !== undefined) updateData.baseSku = body.baseSku;

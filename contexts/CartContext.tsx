@@ -5,7 +5,7 @@ import { CartItem, ProductData, FlavorData } from '@/types';
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: ProductData, flavor?: FlavorData | null, quantity?: number, notes?: string) => void;
+  addToCart: (product: ProductData, flavor?: FlavorData | null, quantity?: number, notes?: string, overrideUnitPrice?: number, minQty?: number) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -55,9 +55,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     product: ProductData,
     flavor: FlavorData | null = null,
     quantity = 1,
-    notes = ''
+    notes = '',
+    overrideUnitPrice?: number,
+    minQty: number = 1
   ) => {
-    const unitPrice = flavor?.price ?? product.basePromoPrice ?? product.basePrice;
+    const unitPrice = overrideUnitPrice ?? flavor?.price ?? product.basePromoPrice ?? product.basePrice;
     const cartItemId = flavor ? `${product.id}-${flavor.id}` : product.id;
 
     setItems((prevItems) => {
@@ -85,6 +87,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           quantity,
           unitPrice,
           notes,
+          minQty,
         },
       ];
     });
@@ -97,14 +100,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateQuantity = (cartItemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(cartItemId);
-      return;
-    }
-
     setItems((prev) =>
       prev.map((item) => {
         if (item.id === cartItemId) {
+          const itemMinQty = item.minQty ?? 1;
+          
+          if (quantity < itemMinQty) {
+            // Se for menor que o mínimo, não deixa diminuir, a não ser que a quantidade seja 0 (remover).
+            // Porém o botão de minus no CartDrawer chama updateQuantity com quantity - 1. 
+            // Para remover, é preciso chamar removeFromCart direto, ou a UI precisa permitir deletar se chegar em 0.
+            // Para ficar consistente, vamos travar a quantidade mínima. Para remover, o botão da Lixeira serve.
+            return item;
+          }
+
           const maxStock = item.selectedFlavor ? item.selectedFlavor.stock : item.product.baseStock;
           return {
             ...item,

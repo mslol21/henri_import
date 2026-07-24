@@ -13,6 +13,7 @@ import {
   Phone,
   QrCode,
   CheckCircle,
+  Lock,
 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
@@ -271,6 +272,30 @@ export default function AdminSettingsPage() {
                 onChange={(e) => handleChange('pixKey', e.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:border-purple-600 focus:outline-none"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Atacado (B2B) */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+          <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+            <Lock className="h-4 w-4 text-purple-600" />
+            <span>Acesso Restrito: Atacado</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Senha Universal do Atacado</label>
+              <input
+                type="text"
+                placeholder="Ex: REVENDANOUVEAU"
+                value={formData.wholesalePassword || ''}
+                onChange={(e) => handleChange('wholesalePassword', e.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:border-purple-600 focus:outline-none"
+              />
+              <p className="text-[10px] text-slate-500 mt-1">
+                Apenas clientes com essa senha poderão ver os preços de atacado.
+              </p>
             </div>
           </div>
         </div>
