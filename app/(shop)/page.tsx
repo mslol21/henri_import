@@ -4,7 +4,7 @@ import { CategoryGrid } from '@/components/shop/CategoryGrid';
 import { ProductCard } from '@/components/shop/ProductCard';
 import { getCategories } from '@/actions/categories';
 import { getProducts } from '@/actions/products';
-import { Sparkles, Flame, Tag, ArrowRight } from 'lucide-react';
+import { Sparkles, Flame, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { isWholesaleUser } from '@/lib/auth';
 
@@ -55,7 +55,7 @@ export default async function LandingPage() {
       </section>
 
       {/* 4. Best Sellers (Produtos Mais Vendidos) */}
-      <section className="py-12 sm:py-16 bg-sky-50/60 backdrop-blur-xs border-b border-sky-100">
+      <section className="py-12 sm:py-16 bg-sky-50/60 backdrop-blur-xs">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
@@ -80,35 +80,6 @@ export default async function LandingPage() {
               <ProductCard key={product.id} product={product} isWholesale={isWholesale} />
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* 5. Banner Promocional Intermediário - Light Blue Sky Theme */}
-      <section className="py-10 sm:py-14 bg-gradient-to-r from-sky-600 via-sky-700 to-cyan-800 text-white relative overflow-hidden shadow-lg">
-        {/* Vapor Smoke Light Effects */}
-        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-sky-300/20 blur-3xl pointer-events-none" />
-
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-3 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3.5 py-1 text-xs font-bold text-white border border-white/30 backdrop-blur-xs">
-              <Tag className="h-3.5 w-3.5" />
-              <span>OFERTAS IMPERDÍVEIS</span>
-            </div>
-            <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Gosta de desconto? Economize até 20% no Combo Pods + Essências!
-            </h3>
-            <p className="text-xs sm:text-sm text-sky-100 max-w-xl font-medium">
-              Insira o cupom <strong className="text-white underline underline-offset-2">HENRI10</strong> no carrinho para ganhar 10% OFF em qualquer pedido.
-            </p>
-          </div>
-
-          <Link
-            href="/search?promo=true"
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-white px-7 py-3.5 text-sm font-black text-sky-800 shadow-xl hover:bg-sky-50 transition-all hover:scale-105"
-          >
-            Aproveitar Promoções
-          </Link>
         </div>
       </section>
     </div>
