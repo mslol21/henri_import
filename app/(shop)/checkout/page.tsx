@@ -42,6 +42,19 @@ export default function CheckoutPage() {
   } | null>(null);
   const [cepError, setCepError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWholesale, setIsWholesale] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsWholesale(
+        document.cookie.includes('wholesale_auth=true') || window.location.search.includes('atacado=true')
+      );
+    }
+  }, []);
+
+  const totalCartUnits = items.reduce((acc, item) => acc + item.quantity, 0);
+  const minWholesaleTotal = 10;
+  const isWholesaleMinUnmet = isWholesale && totalCartUnits < minWholesaleTotal;
 
   const {
     register,
@@ -499,14 +512,33 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Wholesale Minimum Warning Banner */}
+              {isWholesaleMinUnmet && (
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl text-purple-900 text-xs space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <AlertCircle className="h-4 w-4 text-purple-600 shrink-0" />
+                    <span>Regra do Atacado: Mínimo 10 peças no total</span>
+                  </p>
+                  <p className="text-purple-800 text-[11px] leading-relaxed">
+                    Você possui <strong>{totalCartUnits}</strong> de <strong>{minWholesaleTotal}</strong> peças no carrinho. Adicione mais <strong>{minWholesaleTotal - totalCartUnits}</strong> unidade(s) de qualquer item para liberar a compra no atacado.
+                  </p>
+                </div>
+              )}
+
               {/* WhatsApp Submit Action */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isWholesaleMinUnmet}
                 className="w-full flex items-center justify-center gap-3 rounded-2xl bg-emerald-600 py-4 text-base font-black text-white shadow-xl shadow-emerald-600/30 hover:bg-emerald-500 disabled:opacity-50 transition-all"
               >
                 <Phone className="h-5 w-5 fill-white" />
-                <span>{isSubmitting ? 'Gerando Pedido...' : 'Enviar Pedido no WhatsApp'}</span>
+                <span>
+                  {isSubmitting
+                    ? 'Gerando Pedido...'
+                    : isWholesaleMinUnmet
+                    ? `Faltam ${minWholesaleTotal - totalCartUnits} peças para o atacado`
+                    : 'Enviar Pedido no WhatsApp'}
+                </span>
               </button>
 
               <p className="text-[11px] text-center text-slate-400">

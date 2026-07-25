@@ -24,6 +24,19 @@ export function CartDrawer() {
 
   const [couponInput, setCouponInput] = useState('');
   const [couponFeedback, setCouponFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [isWholesale, setIsWholesale] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsWholesale(
+        document.cookie.includes('wholesale_auth=true') || window.location.search.includes('atacado=true')
+      );
+    }
+  }, [isCartOpen]);
+
+  const totalCartUnits = items.reduce((acc, item) => acc + item.quantity, 0);
+  const minWholesaleTotal = 10;
+  const isWholesaleMinUnmet = isWholesale && totalCartUnits < minWholesaleTotal;
 
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,6 +217,19 @@ export function CartDrawer() {
                   )}
                 </form>
 
+                {/* Wholesale Minimum Warning */}
+                {isWholesaleMinUnmet && (
+                  <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-2xl text-purple-900 text-xs space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-purple-900">
+                      <Sparkles className="h-4 w-4 text-purple-600 shrink-0" />
+                      <span>Atacado B2B: Mínimo 10 peças no total</span>
+                    </div>
+                    <p className="text-[11px] text-purple-800 font-medium">
+                      Você possui <strong>{totalCartUnits}</strong> de <strong>{minWholesaleTotal}</strong> peças no carrinho. Adicione mais <strong>{minWholesaleTotal - totalCartUnits}</strong> peça(s) para liberar o pedido no atacado.
+                    </p>
+                  </div>
+                )}
+
                 {/* Subtotal / Total Summary */}
                 <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-200">
                   <div className="flex justify-between">
@@ -223,14 +249,23 @@ export function CartDrawer() {
                 </div>
 
                 {/* Checkout Link */}
-                <Link
-                  href="/checkout"
-                  onClick={() => setIsCartOpen(false)}
-                  className="flex w-full items-center justify-center gap-3 rounded-xl bg-sky-600 py-3.5 text-sm font-black text-white shadow-lg shadow-sky-600/30 hover:bg-sky-500 transition-all"
-                >
-                  <span>Finalizar Pedido</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                {isWholesaleMinUnmet ? (
+                  <button
+                    disabled
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-200 py-3.5 text-xs font-bold text-purple-800 cursor-not-allowed border border-purple-300 opacity-90"
+                  >
+                    <span>Faltam {minWholesaleTotal - totalCartUnits} peças para o mínimo do atacado</span>
+                  </button>
+                ) : (
+                  <Link
+                    href="/checkout"
+                    onClick={() => setIsCartOpen(false)}
+                    className="flex w-full items-center justify-center gap-3 rounded-xl bg-sky-600 py-3.5 text-sm font-black text-white shadow-lg shadow-sky-600/30 hover:bg-sky-500 transition-all"
+                  >
+                    <span>Finalizar Pedido</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                )}
               </div>
             )}
           </motion.div>

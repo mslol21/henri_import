@@ -36,10 +36,10 @@ export function FlavorSelector({ product, isWholesale }: { product: ProductData;
     return p;
   };
 
-  const minQty = isWholesalePriceApplied && product.minWholesaleQty ? product.minWholesaleQty : 1;
+  const minQty = 1;
 
   const [selectedFlavor, setSelectedFlavor] = useState<FlavorData | null>(initialFlavor);
-  const [quantity, setQuantity] = useState<number>(minQty);
+  const [quantity, setQuantity] = useState<number>(1);
   const [notes, setNotes] = useState<string>('');
   const [addedToast, setAddedToast] = useState<boolean>(false);
 

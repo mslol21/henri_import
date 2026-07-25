@@ -103,13 +103,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) =>
       prev.map((item) => {
         if (item.id === cartItemId) {
-          const itemMinQty = item.minQty ?? 1;
-          
-          if (quantity < itemMinQty) {
-            // Se for menor que o mínimo, não deixa diminuir, a não ser que a quantidade seja 0 (remover).
-            // Porém o botão de minus no CartDrawer chama updateQuantity com quantity - 1. 
-            // Para remover, é preciso chamar removeFromCart direto, ou a UI precisa permitir deletar se chegar em 0.
-            // Para ficar consistente, vamos travar a quantidade mínima. Para remover, o botão da Lixeira serve.
+          if (quantity < 1) {
             return item;
           }
 

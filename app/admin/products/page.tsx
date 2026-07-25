@@ -351,97 +351,117 @@ export default function AdminProductsPage() {
 
       {/* --- PRODUCT MODAL --- */}
       {productModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 space-y-5 my-8">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-2xl max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden my-auto border border-slate-200">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
               <h2 className="text-lg font-black text-slate-900">{editingProduct ? 'Editar Produto' : 'Novo Produto'}</h2>
-              <button onClick={() => setProductModalOpen(false)} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><X className="h-4 w-4 text-slate-500" /></button>
+              <button onClick={() => setProductModalOpen(false)} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+                <X className="h-4 w-4 text-slate-500" />
+              </button>
             </div>
-            
-            {productFormError && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex items-center gap-2"><AlertCircle className="w-4 h-4"/>{productFormError}</div>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Produto *</label>
-                <input type="text" value={productForm.name} onChange={(e) => handleProductNameChange(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Slug (URL) *</label>
-                <input type="text" value={productForm.slug} onChange={(e) => setProductForm({...productForm, slug: e.target.value.toLowerCase()})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Categoria *</label>
-                <select value={productForm.categoryId} onChange={(e) => setProductForm({...productForm, categoryId: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900">
-                  <option value="">Selecione...</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Preço Base (R$) *</label>
-                <input type="number" step="0.01" value={productForm.basePrice} onChange={(e) => setProductForm({...productForm, basePrice: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Preço Promocional (R$)</label>
-                <input type="number" step="0.01" value={productForm.basePromoPrice ?? ''} onChange={(e) => setProductForm({...productForm, basePromoPrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
-              </div>
-
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-purple-50 rounded-2xl border border-purple-100">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1 text-purple-900">Preço de Atacado (R$)</label>
-                  <input type="number" step="0.01" value={productForm.wholesalePrice ?? ''} onChange={(e) => setProductForm({...productForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500" placeholder="Ex: 50.00" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1 text-purple-900">Qtd Mín. Atacado</label>
-                  <input type="number" value={productForm.minWholesaleQty ?? ''} onChange={(e) => setProductForm({...productForm, minWholesaleQty: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500" placeholder="Ex: 10" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">SKU Base *</label>
-                <input type="text" value={productForm.baseSku} onChange={(e) => setProductForm({...productForm, baseSku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900" />
-              </div>
-
-              <div className="md:col-span-2">
-                <ImageUploadInput
-                  label="Imagem Principal do Produto *"
-                  value={productForm.mainImageUrl}
-                  onChange={(url) => setProductForm({...productForm, mainImageUrl: url})}
-                  bucket="products"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">Descrição</label>
-                <textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
-              </div>
-
-              <div className="flex items-center gap-6 md:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={productForm.hasFlavors} onChange={(e) => setProductForm({...productForm, hasFlavors: e.target.checked})} className="rounded text-sky-600" />
-                  <span className="text-sm font-bold text-slate-700">Possui Sabores/Variações</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={productForm.active} onChange={(e) => setProductForm({...productForm, active: e.target.checked})} className="rounded text-sky-600" />
-                  <span className="text-sm font-bold text-slate-700">Produto Ativo</span>
-                </label>
-              </div>
-
-              {!productForm.hasFlavors && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Estoque Inicial (Sem sabor)</label>
-                  <input type="number" value={productForm.baseStock} onChange={(e) => setProductForm({...productForm, baseStock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
+            {/* Modal Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              {productFormError && (
+                <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {productFormError}
                 </div>
               )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Produto *</label>
+                  <input type="text" value={productForm.name} onChange={(e) => handleProductNameChange(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Ex: Ignite V250" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Marca *</label>
+                  <input type="text" value={productForm.brand} onChange={(e) => setProductForm({...productForm, brand: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Ex: Ignite, Elfbar, Zomo" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Slug (URL) *</label>
+                  <input type="text" value={productForm.slug} onChange={(e) => setProductForm({...productForm, slug: e.target.value.toLowerCase()})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-sky-500" />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Categoria *</label>
+                  <select value={productForm.categoryId} onChange={(e) => setProductForm({...productForm, categoryId: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500">
+                    <option value="">Selecione uma categoria...</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Preço Base (R$) *</label>
+                  <input type="number" step="0.01" value={productForm.basePrice} onChange={(e) => setProductForm({...productForm, basePrice: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" placeholder="0.00" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Preço Promocional (R$)</label>
+                  <input type="number" step="0.01" value={productForm.basePromoPrice ?? ''} onChange={(e) => setProductForm({...productForm, basePromoPrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Opcional" />
+                </div>
+
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-purple-50 rounded-2xl border border-purple-100">
+                  <div>
+                    <label className="block text-xs font-bold text-purple-900 mb-1">Preço de Atacado (R$)</label>
+                    <input type="number" step="0.01" value={productForm.wholesalePrice ?? ''} onChange={(e) => setProductForm({...productForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 50.00" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-purple-900 mb-1">Qtd Mín. Atacado</label>
+                    <input type="number" value={productForm.minWholesaleQty ?? ''} onChange={(e) => setProductForm({...productForm, minWholesaleQty: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 10" />
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">SKU Base *</label>
+                  <input type="text" value={productForm.baseSku} onChange={(e) => setProductForm({...productForm, baseSku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Ex: PROD-001" />
+                </div>
+
+                <div className="md:col-span-2">
+                  <ImageUploadInput
+                    label="Imagem Principal do Produto *"
+                    value={productForm.mainImageUrl}
+                    onChange={(url) => setProductForm({...productForm, mainImageUrl: url})}
+                    bucket="products"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Descrição</label>
+                  <textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({...productForm, description: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Detalhes do produto..." />
+                </div>
+
+                <div className="flex items-center gap-6 md:col-span-2 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={productForm.hasFlavors} onChange={(e) => setProductForm({...productForm, hasFlavors: e.target.checked})} className="rounded text-sky-600 focus:ring-sky-500" />
+                    <span className="text-sm font-bold text-slate-700">Possui Sabores/Variações</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={productForm.active} onChange={(e) => setProductForm({...productForm, active: e.target.checked})} className="rounded text-sky-600 focus:ring-sky-500" />
+                    <span className="text-sm font-bold text-slate-700">Produto Ativo</span>
+                  </label>
+                </div>
+
+                {!productForm.hasFlavors && (
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Estoque Inicial (Sem sabor)</label>
+                    <input type="number" value={productForm.baseStock} onChange={(e) => setProductForm({...productForm, baseStock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" />
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <button onClick={() => setProductModalOpen(false)} className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200">Cancelar</button>
-              <button onClick={saveProduct} disabled={productSaving} className="px-6 py-2 rounded-xl text-sm font-black text-white bg-sky-600 hover:bg-sky-500 disabled:opacity-50 flex items-center gap-2">
-                {productSaving && <Loader2 className="w-4 h-4 animate-spin"/>} Salvar Produto
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0 bg-slate-50/50">
+              <button onClick={() => setProductModalOpen(false)} className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+                Cancelar
+              </button>
+              <button onClick={saveProduct} disabled={productSaving} className="px-6 py-2.5 rounded-xl text-sm font-black text-white bg-sky-600 hover:bg-sky-500 shadow-lg shadow-sky-600/30 transition-all disabled:opacity-50 flex items-center gap-2">
+                {productSaving && <Loader2 className="w-4 h-4 animate-spin"/>}
+                <span>Salvar Produto</span>
               </button>
             </div>
           </div>
@@ -450,36 +470,38 @@ export default function AdminProductsPage() {
 
       {/* --- FLAVOR MODAL --- */}
       {flavorModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-md max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden my-auto border border-slate-200">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
               <h2 className="text-base font-black text-slate-900">{editingFlavor ? 'Editar Sabor' : 'Adicionar Sabor'}</h2>
-              <button onClick={() => setFlavorModalOpen(false)} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><X className="h-4 w-4 text-slate-500" /></button>
+              <button onClick={() => setFlavorModalOpen(false)} className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"><X className="h-4 w-4 text-slate-500" /></button>
             </div>
             
-            {flavorFormError && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex items-center gap-2"><AlertCircle className="w-4 h-4"/>{flavorFormError}</div>}
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              {flavorFormError && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0"/>{flavorFormError}</div>}
 
-            <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Nome do Sabor *</label>
-                <input type="text" value={flavorForm.name} onChange={(e) => setFlavorForm({...flavorForm, name: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
+                <input type="text" value={flavorForm.name} onChange={(e) => setFlavorForm({...flavorForm, name: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-purple-500" placeholder="Ex: Grape Ice" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">SKU da Variação *</label>
-                <input type="text" value={flavorForm.sku} onChange={(e) => setFlavorForm({...flavorForm, sku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900" />
+                <input type="text" value={flavorForm.sku} onChange={(e) => setFlavorForm({...flavorForm, sku: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-purple-500" placeholder="Ex: IGN-GRP-01" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Estoque</label>
-                  <input type="number" value={flavorForm.stock} onChange={(e) => setFlavorForm({...flavorForm, stock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" />
+                  <input type="number" value={flavorForm.stock} onChange={(e) => setFlavorForm({...flavorForm, stock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-purple-500" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Preço Varejo Especial</label>
-                  <input type="number" step="0.01" value={flavorForm.price ?? ''} onChange={(e) => setFlavorForm({...flavorForm, price: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900" placeholder="Ex: 10.00" />
+                  <input type="number" step="0.01" value={flavorForm.price ?? ''} onChange={(e) => setFlavorForm({...flavorForm, price: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-purple-500" placeholder="Ex: 10.00" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-purple-900 mb-1">Preço Atacado Especial</label>
-                  <input type="number" step="0.01" value={flavorForm.wholesalePrice ?? ''} onChange={(e) => setFlavorForm({...flavorForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500" placeholder="Caso este sabor tenha preço diferente no atacado" />
+                  <input type="number" step="0.01" value={flavorForm.wholesalePrice ?? ''} onChange={(e) => setFlavorForm({...flavorForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Caso este sabor tenha preço diferente no atacado" />
                 </div>
               </div>
               <div>
@@ -492,15 +514,16 @@ export default function AdminProductsPage() {
               </div>
               <div>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={flavorForm.active} onChange={(e) => setFlavorForm({...flavorForm, active: e.target.checked})} className="rounded text-sky-600" />
+                  <input type="checkbox" checked={flavorForm.active} onChange={(e) => setFlavorForm({...flavorForm, active: e.target.checked})} className="rounded text-purple-600 focus:ring-purple-500" />
                   <span className="text-sm font-bold text-slate-700">Sabor Ativo</span>
                 </label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <button onClick={() => setFlavorModalOpen(false)} className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200">Cancelar</button>
-              <button onClick={saveFlavor} disabled={flavorSaving} className="px-6 py-2 rounded-xl text-sm font-black text-white bg-purple-600 hover:bg-purple-500 disabled:opacity-50 flex items-center gap-2">
+            {/* Footer */}
+            <div className="p-6 border-t border-slate-100 flex justify-end gap-3 shrink-0 bg-slate-50/50">
+              <button onClick={() => setFlavorModalOpen(false)} className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">Cancelar</button>
+              <button onClick={saveFlavor} disabled={flavorSaving} className="px-6 py-2.5 rounded-xl text-sm font-black text-white bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-600/30 transition-all disabled:opacity-50 flex items-center gap-2">
                 {flavorSaving && <Loader2 className="w-4 h-4 animate-spin"/>} Salvar Sabor
               </button>
             </div>

@@ -48,13 +48,8 @@ export function ProductCard({ product, isWholesale }: { product: ProductData; is
         {isWholesalePriceApplied && (
           <div className="absolute top-3 left-3 flex flex-col gap-1">
             <div className="rounded-full bg-purple-600 px-2.5 py-1 text-[11px] font-black text-white shadow-xs w-max">
-              ATACADO
+              PREÇO ATACADO
             </div>
-            {product.minWholesaleQty && product.minWholesaleQty > 1 && (
-              <div className="rounded-full bg-purple-100 px-2 py-0.5 text-[9px] font-bold text-purple-800 shadow-xs w-max border border-purple-200">
-                Mín: {product.minWholesaleQty} un.
-              </div>
-            )}
           </div>
         )}
 
