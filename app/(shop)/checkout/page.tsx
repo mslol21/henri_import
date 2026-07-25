@@ -6,6 +6,7 @@ import { useConfig } from '@/contexts/ConfigContext';
 import { formatCurrency } from '@/lib/utils';
 import {
   lookupAddressByCep,
+  getCoordsForAddress,
   estimateCoordsFromCep,
   calculateDeliveryFee,
 } from '@/services/distance';
@@ -87,8 +88,17 @@ export default function CheckoutPage() {
       setValue('city', addr.city);
       setValue('state', addr.state);
 
-      // 2. Estimate client coordinates & calculate distance
-      const clientCoords = estimateCoordsFromCep(cep, config.latitude, config.longitude);
+      // 2. Calculate real client coordinates & distance relative to store CEP
+      const clientCoords = await getCoordsForAddress({
+        cep,
+        street: addr.street,
+        neighborhood: addr.neighborhood,
+        city: addr.city,
+        state: addr.state,
+        storeLat: config.latitude,
+        storeLon: config.longitude,
+        storeCep: config.cep,
+      });
 
       const feeResult = calculateDeliveryFee({
         storeLat: config.latitude,

@@ -40,7 +40,7 @@ export function calculateHaversineDistance(
   return Math.round(distance * 10) / 10; // Round to 1 decimal place
 }
 
-// Fetch address from ViaCEP and estimate/geocode coordinates
+// Fetch address from ViaCEP
 export async function lookupAddressByCep(cep: string) {
   const cleanCep = cep.replace(/\D/g, '');
   if (cleanCep.length !== 8) {
@@ -66,22 +66,119 @@ export async function lookupAddressByCep(cep: string) {
   };
 }
 
-// Estimate lat/lon coordinates from CEP prefix for realistic distance calculation
-export function estimateCoordsFromCep(cep: string, defaultLat = -23.5616, defaultLon = -46.656): { lat: number; lon: number } {
-  const clean = cep.replace(/\D/g, '');
-  if (!clean) return { lat: defaultLat, lon: defaultLon };
-  
-  const num = parseInt(clean.substring(0, 5), 10);
-  const hash = (num % 1000) / 100; // Small variance in degrees
-  const hash2 = (num % 700) / 100;
-  
-  // Approximate offset for local calculation simulation
-  const latOffset = (hash - 5) * 0.012;
-  const lonOffset = (hash2 - 3.5) * 0.012;
+// Get realistic client coordinates (checks same CEP, real Geocoding, or fallback estimation)
+export async function getCoordsForAddress({
+  cep,
+  street,
+  neighborhood,
+  city,
+  state,
+  storeLat,
+  storeLon,
+  storeCep,
+}: {
+  cep: string;
+  street?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  storeLat: number;
+  storeLon: number;
+  storeCep?: string;
+}): Promise<{ lat: number; lon: number }> {
+  const cleanClientCep = cep.replace(/\D/g, '');
+  const cleanStoreCep = storeCep ? storeCep.replace(/\D/g, '') : '';
+
+  // 1. Exact match CEP (same address or same store CEP): 0 km distance
+  if (cleanClientCep && cleanStoreCep && cleanClientCep === cleanStoreCep) {
+    return { lat: storeLat, lon: storeLon };
+  }
+
+  // 2. Real Geocoding lookup via Nominatim OpenStreetMap
+  if (street && city) {
+    try {
+      const query = encodeURIComponent(`${street}, ${neighborhood || ''}, ${city} - ${state || ''}, Brasil`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'HenriImports/1.0',
+          },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0 && data[0].lat && data[0].lon) {
+          return {
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon),
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Nominatim geocoding fallback:', err);
+    }
+  }
+
+  // 3. Same CEP prefix (first 5 digits = same neighborhood / sub-district)
+  if (
+    cleanClientCep.length >= 5 &&
+    cleanStoreCep.length >= 5 &&
+    cleanClientCep.substring(0, 5) === cleanStoreCep.substring(0, 5)
+  ) {
+    return {
+      lat: storeLat + 0.001, // ~100 meters away
+      lon: storeLon + 0.001,
+    };
+  }
+
+  // 4. Fallback estimation based on CEP difference from store CEP
+  const clientNum = parseInt(cleanClientCep.substring(0, 5) || '0', 10);
+  const storeNum = parseInt(cleanStoreCep.substring(0, 5) || '0', 10);
+  const diff = storeNum ? Math.abs(clientNum - storeNum) : 0;
+
+  const approxKm = Math.min(30, Math.max(0.5, diff * 0.05));
+  const approxDeg = approxKm / 111;
 
   return {
-    lat: defaultLat + latOffset,
-    lon: defaultLon + lonOffset,
+    lat: storeLat + approxDeg,
+    lon: storeLon + approxDeg,
+  };
+}
+
+// Synchronous estimation helper
+export function estimateCoordsFromCep(
+  cep: string,
+  defaultLat = -23.5616,
+  defaultLon = -46.656,
+  storeCep?: string
+): { lat: number; lon: number } {
+  const cleanClient = cep.replace(/\D/g, '');
+  const cleanStore = storeCep ? storeCep.replace(/\D/g, '') : '';
+
+  if (cleanClient && cleanStore && cleanClient === cleanStore) {
+    return { lat: defaultLat, lon: defaultLon };
+  }
+
+  if (
+    cleanClient.length >= 5 &&
+    cleanStore.length >= 5 &&
+    cleanClient.substring(0, 5) === cleanStore.substring(0, 5)
+  ) {
+    return { lat: defaultLat + 0.001, lon: defaultLon + 0.001 };
+  }
+
+  const clientNum = parseInt(cleanClient.substring(0, 5) || '0', 10);
+  const storeNum = parseInt(cleanStore.substring(0, 5) || '0', 10);
+  const diff = storeNum ? Math.abs(clientNum - storeNum) : 0;
+
+  const approxKm = Math.min(30, Math.max(0.5, diff * 0.05));
+  const approxDeg = approxKm / 111;
+
+  return {
+    lat: defaultLat + approxDeg,
+    lon: defaultLon + approxDeg,
   };
 }
 
@@ -124,8 +221,8 @@ export function calculateDeliveryFee({
     }
   }
 
-  // Estimated delivery time: 25 minutes preparation/dispatch + 3.5 mins per km
-  const estimatedTimeMin = Math.round(25 + distanceKm * 3.5);
+  // Estimated delivery time: 20 minutes preparation + 3.5 mins per km
+  const estimatedTimeMin = Math.round(20 + distanceKm * 3.5);
 
   return {
     distanceKm,
