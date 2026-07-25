@@ -243,3 +243,49 @@ model Banner {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+model Coupon {
+  id            String     @id @default(uuid())
+  code          String     @unique
+  discountType  CouponType @default(PERCENTAGE)
+  discountValue Float      @default(10)
+  minOrderValue Float?     @default(0)
+  freeShipping  Boolean    @default(false)
+  maxUses       Int?
+  usedCount     Int        @default(0)
+  active        Boolean    @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model PromotionRule {
+  id            String      @id @default(uuid())
+  title         String
+  description   String?
+  targetType    PromoTarget @default(PRODUCT)
+  productId     String?
+  categoryId    String?
+  discountType  CouponType  @default(PERCENTAGE)
+  discountValue Float       @default(0)
+  freeShipping  Boolean     @default(false)
+  badgeText     String?
+  active        Boolean     @default(true)
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
+enum PromoTarget {
+  PRODUCT
+  CATEGORY
+  ALL
+}
+

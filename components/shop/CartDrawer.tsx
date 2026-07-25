@@ -38,14 +38,22 @@ export function CartDrawer() {
   const minWholesaleTotal = 10;
   const isWholesaleMinUnmet = isWholesale && totalCartUnits < minWholesaleTotal;
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!couponInput.trim()) return;
 
-    const res = applyCoupon(couponInput);
-    setCouponFeedback(res);
-    if (res.success) {
-      setCouponInput('');
+    setValidatingCoupon(true);
+    setCouponFeedback(null);
+    try {
+      const res = await applyCoupon(couponInput);
+      setCouponFeedback(res);
+      if (res.success) {
+        setCouponInput('');
+      }
+    } finally {
+      setValidatingCoupon(false);
     }
   };
 

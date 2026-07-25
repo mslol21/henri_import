@@ -5,7 +5,14 @@ import { CartItem, ProductData, FlavorData } from '@/types';
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: ProductData, flavor?: FlavorData | null, quantity?: number, notes?: string, overrideUnitPrice?: number, minQty?: number) => void;
+  addToCart: (
+    product: ProductData,
+    flavor?: FlavorData | null,
+    quantity?: number,
+    notes?: string,
+    overrideUnitPrice?: number,
+    minQty?: number
+  ) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -14,8 +21,9 @@ interface CartContextType {
   subtotal: number;
   discount: number;
   appliedCoupon: string | null;
-  applyCoupon: (code: string) => { success: boolean; message: string };
+  applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
   removeCoupon: () => void;
+  freeShippingGranted: boolean;
   total: number;
   itemCount: number;
 }
@@ -28,7 +36,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
-  const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
+  const [freeShippingGranted, setFreeShippingGranted] = useState<boolean>(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -121,31 +130,49 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = () => {
     setItems([]);
     setAppliedCoupon(null);
-    setDiscountPercent(0);
+    setCouponDiscount(0);
+    setFreeShippingGranted(false);
   };
 
-  const applyCoupon = (code: string) => {
+  const subtotal = items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
+
+  const applyCoupon = async (code: string) => {
     const clean = code.trim().toUpperCase();
-    if (clean === 'HENRI10' || clean === 'VAPE10' || clean === 'BENVINDO10') {
-      setAppliedCoupon(clean);
-      setDiscountPercent(0.1); // 10% off
-      return { success: true, message: 'Cupom de 10% de desconto aplicado com sucesso!' };
+    if (!clean) return { success: false, message: 'Digite o código do cupom.' };
+
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: clean, subtotal }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, message: data.error || 'Cupom inválido ou inativo.' };
+      }
+
+      setAppliedCoupon(data.code);
+      setCouponDiscount(data.calculatedDiscount || 0);
+      setFreeShippingGranted(Boolean(data.freeShipping));
+      return { success: true, message: data.message };
+    } catch {
+      if (clean === 'HENRI10' || clean === 'VAPE10') {
+        setAppliedCoupon(clean);
+        setCouponDiscount(subtotal * 0.1);
+        return { success: true, message: 'Cupom de 10% aplicado!' };
+      }
+      return { success: false, message: 'Erro ao validar cupom.' };
     }
-    if (clean === 'HENRI20' || clean === 'VIP20') {
-      setAppliedCoupon(clean);
-      setDiscountPercent(0.2); // 20% off
-      return { success: true, message: 'Cupom VIP de 20% de desconto aplicado!' };
-    }
-    return { success: false, message: 'Cupom inválido ou expirado.' };
   };
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
-    setDiscountPercent(0);
+    setCouponDiscount(0);
+    setFreeShippingGranted(false);
   };
 
-  const subtotal = items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
-  const discount = subtotal * discountPercent;
+  const discount = Math.min(subtotal, couponDiscount);
   const total = Math.max(0, subtotal - discount);
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -164,6 +191,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         appliedCoupon,
         applyCoupon,
         removeCoupon,
+        freeShippingGranted,
         total,
         itemCount,
       }}

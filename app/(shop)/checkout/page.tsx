@@ -30,7 +30,7 @@ import {
 import Link from 'next/link';
 
 export default function CheckoutPage() {
-  const { items, subtotal, discount, total: cartTotal, clearCart } = useCart();
+  const { items, subtotal, discount, total: cartTotal, clearCart, freeShippingGranted } = useCart();
   const { config } = useConfig();
   const router = useRouter();
 
@@ -132,7 +132,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const deliveryFee = deliveryInfo ? deliveryInfo.deliveryFee : 0;
+  const deliveryFee = freeShippingGranted ? 0 : (deliveryInfo ? deliveryInfo.deliveryFee : 0);
   const grandTotal = Math.max(0, cartTotal + deliveryFee);
 
   const onSubmit = async (formData: CheckoutFormData) => {
