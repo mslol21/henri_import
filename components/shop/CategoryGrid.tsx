@@ -52,10 +52,14 @@ export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
                   className="group flex flex-col items-center justify-center p-4 rounded-2xl bg-white/90 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-sky-300 transition-all text-center h-full"
                 >
                   <div
-                    className="flex h-14 w-14 items-center justify-center rounded-2xl text-white mb-3 shadow-md group-hover:scale-110 transition-transform"
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl text-white mb-3 shadow-md group-hover:scale-110 transition-transform overflow-hidden relative"
                     style={{ backgroundColor: cat.color || '#0284c7' }}
                   >
-                    <IconComponent className="h-7 w-7" />
+                    {cat.imageUrl ? (
+                      <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <IconComponent className="h-7 w-7" />
+                    )}
                   </div>
                   <h3 className="text-xs font-bold text-slate-800 group-hover:text-sky-600 transition-colors line-clamp-1">
                     {cat.name}

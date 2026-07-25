@@ -14,11 +14,14 @@ import {
   GripVertical
 } from 'lucide-react';
 
+import { ImageUploadInput } from '@/components/admin/ImageUploadInput';
+
 interface CategoryData {
   id: string;
   name: string;
   slug: string;
   icon: string;
+  imageUrl?: string | null;
   color: string;
   active: boolean;
   displayOrder: number;
@@ -28,12 +31,13 @@ interface CategoryData {
 interface CategoryFormData {
   name: string;
   slug: string;
+  imageUrl: string;
   color: string;
   active: boolean;
   displayOrder: number;
 }
 
-const emptyForm: CategoryFormData = { name: '', slug: '', color: '#0284c7', active: true, displayOrder: 0 };
+const emptyForm: CategoryFormData = { name: '', slug: '', imageUrl: '', color: '#0284c7', active: true, displayOrder: 0 };
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<CategoryData[]>([]);
@@ -85,6 +89,7 @@ export default function AdminCategoriesPage() {
     setForm({
       name: cat.name,
       slug: cat.slug,
+      imageUrl: cat.imageUrl || '',
       color: cat.color,
       active: cat.active,
       displayOrder: cat.displayOrder,
@@ -202,10 +207,14 @@ export default function AdminCategoriesPage() {
                     <GripVertical className="h-5 w-5" />
                   </div>
                   <div
-                    className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                    className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-slate-200 shadow-xs"
                     style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
                   >
-                    <Package className="h-5 w-5" />
+                    {cat.imageUrl ? (
+                      <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <Package className="h-5 w-5" />
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -292,6 +301,14 @@ export default function AdminCategoriesPage() {
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 font-mono focus:outline-none focus:border-sky-400"
                 />
               </div>
+
+              {/* Upload Foto ou URL */}
+              <ImageUploadInput
+                label="Imagem / Foto da Categoria"
+                value={form.imageUrl}
+                onChange={(url) => setForm({ ...form, imageUrl: url })}
+                bucket="categories"
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
