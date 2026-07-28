@@ -542,7 +542,6 @@ export default function AdminProductsPage() {
                   <input type="text" inputMode="decimal" value={flavorForm.wholesalePrice ?? ''} onChange={(e) => setFlavorForm({...flavorForm, wholesalePrice: e.target.value})} className="w-full rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 8,50" />
                 </div>
               </div>
-              </div>
               <div>
                 <ImageUploadInput
                   label="Imagem do Sabor (opcional)"
