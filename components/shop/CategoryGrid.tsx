@@ -6,6 +6,8 @@ import { CategoryData } from '@/types';
 import { Zap, Wind, Flame, Sparkles, Box, FileText, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+import { getCleanImageUrl } from '@/lib/utils';
+
 const iconMap: Record<string, React.ElementType> = {
   Zap,
   Wind,
@@ -40,6 +42,7 @@ export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {categories.map((cat, idx) => {
             const IconComponent = iconMap[cat.icon] || Zap;
+            const cleanImage = getCleanImageUrl(cat.imageUrl, '');
             return (
               <motion.div
                 key={cat.id}
@@ -55,8 +58,8 @@ export function CategoryGrid({ categories }: { categories: CategoryData[] }) {
                     className="flex h-14 w-14 items-center justify-center rounded-2xl text-white mb-3 shadow-md group-hover:scale-110 transition-transform overflow-hidden relative"
                     style={{ backgroundColor: cat.color || '#0284c7' }}
                   >
-                    {cat.imageUrl ? (
-                      <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+                    {cleanImage ? (
+                      <img src={cleanImage} alt={cat.name} className="h-full w-full object-cover" />
                     ) : (
                       <IconComponent className="h-7 w-7" />
                     )}

@@ -6,7 +6,7 @@ import {
   Search, AlertCircle, GripVertical, Image as ImageIcon,
   Tag, BarChart, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getCleanImageUrl } from '@/lib/utils';
 import { ImageUploadInput } from '@/components/admin/ImageUploadInput';
 
 interface FlavorData {
@@ -277,7 +277,7 @@ export default function AdminProductsPage() {
               <div key={product.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="p-5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <img src={product.mainImageUrl || '/placeholder.png'} alt={product.name} className="w-14 h-14 object-cover rounded-xl border border-slate-100 bg-slate-50" />
+                    <img src={getCleanImageUrl(product.mainImageUrl)} alt={product.name} className="w-14 h-14 object-cover rounded-xl border border-slate-100 bg-slate-50" />
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-black uppercase text-sky-600 tracking-wider bg-sky-50 px-2 py-0.5 rounded-full">{product.category.name}</span>

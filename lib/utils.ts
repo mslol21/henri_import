@@ -29,6 +29,21 @@ export function formatDate(dateString: string | Date): string {
   }).format(date);
 }
 
+export function parseNumber(val: any): number | null {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  const clean = String(val).replace(',', '.').trim();
+  const parsed = parseFloat(clean);
+  return isNaN(parsed) ? null : parsed;
+}
+
+export function getCleanImageUrl(url?: string | null, fallback = '/images/hero-banner.png'): string {
+  if (!url || typeof url !== 'string' || url.trim() === '' || url.startsWith('blob:')) {
+    return fallback;
+  }
+  return url;
+}
+
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
   return classes.filter(Boolean).join(' ');
 }

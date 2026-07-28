@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { parseNumber } from '@/lib/utils';
 
 export async function GET() {
   try {
@@ -31,6 +32,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 });
     }
 
+    const parsedPrice = parseNumber(basePrice);
+    if (parsedPrice === null) {
+      return NextResponse.json({ error: 'Preço base inválido' }, { status: 400 });
+    }
+
     const product = await db.product.create({
       data: {
         name,
@@ -38,23 +44,23 @@ export async function POST(req: NextRequest) {
         brand: brand || '',
         categoryId,
         description: description || '',
-        basePrice: Number(basePrice),
-        basePromoPrice: basePromoPrice ? Number(basePromoPrice) : null,
-        wholesalePrice: wholesalePrice ? Number(wholesalePrice) : null,
-        minWholesaleQty: minWholesaleQty ? Number(minWholesaleQty) : null,
+        basePrice: parsedPrice,
+        basePromoPrice: parseNumber(basePromoPrice),
+        wholesalePrice: parseNumber(wholesalePrice),
+        minWholesaleQty: parseNumber(minWholesaleQty),
         hasFlavors: Boolean(hasFlavors),
-        baseStock: Number(baseStock || 0),
+        baseStock: parseNumber(baseStock) ?? 0,
         baseSku,
         internalCode: internalCode || null,
         mainImageUrl,
         gallery: gallery || [],
-        weight: Number(weight || 0),
+        weight: parseNumber(weight) ?? 0,
         active: active !== undefined ? Boolean(active) : true,
       },
       include: {
         category: { select: { name: true } },
         flavors: true,
-      }
+      },
     });
 
     return NextResponse.json(product, { status: 201 });
@@ -63,6 +69,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Slug ou SKU já está em uso' }, { status: 409 });
     }
     console.error('POST /api/admin/products error:', error);
-    return NextResponse.json({ error: 'Erro ao criar produto' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao criar produto: ' + (error.message || '') }, { status: 500 });
   }
 }

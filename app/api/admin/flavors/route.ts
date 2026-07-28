@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { parseNumber } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,12 +16,12 @@ export async function POST(req: NextRequest) {
         productId,
         name,
         imageUrl: imageUrl || null,
-        price: price ? Number(price) : null,
-        wholesalePrice: wholesalePrice ? Number(wholesalePrice) : null,
-        stock: Number(stock || 0),
+        price: parseNumber(price),
+        wholesalePrice: parseNumber(wholesalePrice),
+        stock: parseNumber(stock) ?? 0,
         sku,
         description: description || null,
-        displayOrder: displayOrder || 0,
+        displayOrder: parseNumber(displayOrder) ?? 0,
         active: active !== undefined ? Boolean(active) : true,
       },
     });

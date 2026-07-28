@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { parseNumber } from '@/lib/utils';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -9,12 +10,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl;
-    if (body.price !== undefined) updateData.price = body.price === null ? null : Number(body.price);
-    if (body.wholesalePrice !== undefined) updateData.wholesalePrice = body.wholesalePrice === null ? null : Number(body.wholesalePrice);
-    if (body.stock !== undefined) updateData.stock = Number(body.stock);
+    if (body.price !== undefined) updateData.price = parseNumber(body.price);
+    if (body.wholesalePrice !== undefined) updateData.wholesalePrice = parseNumber(body.wholesalePrice);
+    if (body.stock !== undefined) updateData.stock = parseNumber(body.stock) ?? 0;
     if (body.sku !== undefined) updateData.sku = body.sku;
     if (body.description !== undefined) updateData.description = body.description;
-    if (body.displayOrder !== undefined) updateData.displayOrder = Number(body.displayOrder);
+    if (body.displayOrder !== undefined) updateData.displayOrder = parseNumber(body.displayOrder) ?? 0;
     if (body.active !== undefined) updateData.active = Boolean(body.active);
 
     const flavor = await db.flavor.update({
@@ -35,10 +36,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    
+
     // Check if flavor is in any orders
     const orderItemCount = await db.orderItem.count({
-      where: { flavorId: id }
+      where: { flavorId: id },
     });
 
     if (orderItemCount > 0) {

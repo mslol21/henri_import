@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { ImageUploadInput } from '@/components/admin/ImageUploadInput';
+import { getCleanImageUrl } from '@/lib/utils';
 
 interface CategoryData {
   id: string;
@@ -210,8 +211,8 @@ export default function AdminCategoriesPage() {
                     className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-slate-200 shadow-xs"
                     style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
                   >
-                    {cat.imageUrl ? (
-                      <img src={cat.imageUrl} alt={cat.name} className="h-full w-full object-cover" />
+                    {getCleanImageUrl(cat.imageUrl, '') ? (
+                      <img src={getCleanImageUrl(cat.imageUrl)!} alt={cat.name} className="h-full w-full object-cover" />
                     ) : (
                       <Package className="h-5 w-5" />
                     )}

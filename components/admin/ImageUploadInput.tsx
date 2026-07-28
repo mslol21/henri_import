@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UploadCloud, Loader2, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, Loader2, Link as LinkIcon } from 'lucide-react';
 import { uploadImage } from '@/lib/supabase';
 
 interface ImageUploadInputProps {
@@ -21,18 +21,11 @@ export function ImageUploadInput({ label, value, onChange, bucket = 'products' }
     setError(null);
     try {
       const url = await uploadImage(file, bucket);
-      
-      if (url.startsWith('blob:')) {
-        // If uploadImage falls back to blob, it means the Supabase upload failed (e.g., bucket doesn't exist)
-        setError('Falha ao enviar imagem. Verifique se o bucket "'+bucket+'" está criado e público no Supabase.');
-      }
-      
       onChange(url);
     } catch (err: any) {
-      setError('Erro ao enviar: ' + err.message);
+      setError('Erro ao processar imagem: ' + (err.message || 'Tente novamente'));
     } finally {
       setUploading(false);
-      // Reset input so the same file can be selected again if needed
       e.target.value = '';
     }
   };
@@ -40,7 +33,7 @@ export function ImageUploadInput({ label, value, onChange, bucket = 'products' }
   return (
     <div className="space-y-1">
       <label className="block text-xs font-bold text-slate-700">{label}</label>
-      
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -54,13 +47,21 @@ export function ImageUploadInput({ label, value, onChange, bucket = 'products' }
             />
           </div>
           <span className="text-xs font-bold text-slate-400">OU</span>
-          <label className={`relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 transition-colors cursor-pointer ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-            {uploading ? <Loader2 className="h-4 w-4 text-sky-600 animate-spin" /> : <UploadCloud className="h-4 w-4 text-slate-500" />}
-            <span className="text-xs font-bold text-slate-600">{uploading ? 'Enviando...' : 'Carregar do PC'}</span>
+          <label
+            className={`relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 transition-colors cursor-pointer ${
+              uploading ? 'opacity-50 pointer-events-none' : ''
+            }`}
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 text-sky-600 animate-spin" />
+            ) : (
+              <UploadCloud className="h-4 w-4 text-slate-500" />
+            )}
+            <span className="text-xs font-bold text-slate-600">{uploading ? 'Processando...' : 'Carregar do PC'}</span>
             <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           </label>
         </div>
-        
+
         {error && <p className="text-xs font-bold text-red-500">{error}</p>}
       </div>
     </div>

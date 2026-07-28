@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { parseNumber } from '@/lib/utils';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,17 +13,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.brand !== undefined) updateData.brand = body.brand;
     if (body.categoryId !== undefined) updateData.categoryId = body.categoryId;
     if (body.description !== undefined) updateData.description = body.description;
-    if (body.basePrice !== undefined) updateData.basePrice = Number(body.basePrice);
-    if (body.basePromoPrice !== undefined) updateData.basePromoPrice = body.basePromoPrice === null ? null : Number(body.basePromoPrice);
-    if (body.wholesalePrice !== undefined) updateData.wholesalePrice = body.wholesalePrice === null ? null : Number(body.wholesalePrice);
-    if (body.minWholesaleQty !== undefined) updateData.minWholesaleQty = body.minWholesaleQty === null ? null : Number(body.minWholesaleQty);
+    if (body.basePrice !== undefined) updateData.basePrice = parseNumber(body.basePrice) ?? 0;
+    if (body.basePromoPrice !== undefined) updateData.basePromoPrice = parseNumber(body.basePromoPrice);
+    if (body.wholesalePrice !== undefined) updateData.wholesalePrice = parseNumber(body.wholesalePrice);
+    if (body.minWholesaleQty !== undefined) updateData.minWholesaleQty = parseNumber(body.minWholesaleQty);
     if (body.hasFlavors !== undefined) updateData.hasFlavors = Boolean(body.hasFlavors);
-    if (body.baseStock !== undefined) updateData.baseStock = Number(body.baseStock);
+    if (body.baseStock !== undefined) updateData.baseStock = parseNumber(body.baseStock) ?? 0;
     if (body.baseSku !== undefined) updateData.baseSku = body.baseSku;
     if (body.internalCode !== undefined) updateData.internalCode = body.internalCode;
     if (body.mainImageUrl !== undefined) updateData.mainImageUrl = body.mainImageUrl;
     if (body.gallery !== undefined) updateData.gallery = body.gallery;
-    if (body.weight !== undefined) updateData.weight = Number(body.weight);
+    if (body.weight !== undefined) updateData.weight = parseNumber(body.weight) ?? 0;
     if (body.active !== undefined) updateData.active = Boolean(body.active);
 
     const product = await db.product.update({
@@ -31,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       include: {
         category: { select: { name: true } },
         flavors: true,
-      }
+      },
     });
 
     return NextResponse.json(product);
@@ -40,17 +41,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Slug ou SKU já está em uso' }, { status: 409 });
     }
     console.error('PATCH /api/admin/products/[id] error:', error);
-    return NextResponse.json({ error: 'Erro ao atualizar produto' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao atualizar produto: ' + (error.message || '') }, { status: 500 });
   }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    
+
     // Check if product is in any orders
     const orderItemCount = await db.orderItem.count({
-      where: { productId: id }
+      where: { productId: id },
     });
 
     if (orderItemCount > 0) {
