@@ -413,7 +413,7 @@ export default function AdminProductsPage() {
                             </div>
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-slate-900 truncate">{flavor.name}</p>
-                              <p className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">SKU: {flavor.sku} | Est: {flavor.stock} {flavor.price ? `| ${formatCurrency(flavor.price)}` : ''}</p>
+                              <p className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">SKU: {flavor.sku} | Est: {flavor.stock} {parseNumber(flavor.price) ? `| ${formatCurrency(parseNumber(flavor.price)!)}` : ''}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
