@@ -6,7 +6,7 @@ import {
   Search, AlertCircle, GripVertical, Image as ImageIcon,
   Tag, BarChart, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { formatCurrency, getCleanImageUrl } from '@/lib/utils';
+import { formatCurrency, getCleanImageUrl, parseNumber } from '@/lib/utils';
 import { ImageUploadInput } from '@/components/admin/ImageUploadInput';
 
 interface FlavorData {
@@ -53,15 +53,15 @@ interface CategoryData {
 
 const emptyProductForm = {
   name: '', slug: '', brand: '', categoryId: '', description: '',
-  basePrice: 0, basePromoPrice: null as number | null,
-  wholesalePrice: null as number | null, minWholesaleQty: null as number | null,
+  basePrice: '' as string | number, basePromoPrice: '' as string | number | null,
+  wholesalePrice: '' as string | number | null, minWholesaleQty: '' as string | number | null,
   hasFlavors: false,
-  baseStock: 0, baseSku: '', internalCode: '', mainImageUrl: '',
+  baseStock: '' as string | number, baseSku: '', internalCode: '', mainImageUrl: '',
   weight: 0, active: true
 };
 
 const emptyFlavorForm = {
-  name: '', imageUrl: '', price: null as number | null, wholesalePrice: null as number | null, stock: 0,
+  name: '', imageUrl: '', price: '' as string | number | null, wholesalePrice: '' as string | number | null, stock: '' as string | number,
   sku: '', description: '', active: true, displayOrder: 0
 };
 
@@ -135,11 +135,18 @@ export default function AdminProductsPage() {
     setEditingProduct(p.id);
     setProductForm({
       name: p.name, slug: p.slug, brand: p.brand, categoryId: p.categoryId,
-      description: p.description, basePrice: p.basePrice, basePromoPrice: p.basePromoPrice,
-      wholesalePrice: p.wholesalePrice ?? null, minWholesaleQty: p.minWholesaleQty ?? null,
-      hasFlavors: p.hasFlavors, baseStock: p.baseStock, baseSku: p.baseSku,
-      internalCode: p.internalCode || '', mainImageUrl: p.mainImageUrl,
-      weight: p.weight, active: p.active
+      description: p.description,
+      basePrice: p.basePrice ?? '',
+      basePromoPrice: p.basePromoPrice ?? '',
+      wholesalePrice: p.wholesalePrice ?? '',
+      minWholesaleQty: p.minWholesaleQty ?? '',
+      hasFlavors: p.hasFlavors,
+      baseStock: p.baseStock ?? '',
+      baseSku: p.baseSku,
+      internalCode: p.internalCode || '',
+      mainImageUrl: p.mainImageUrl,
+      weight: p.weight,
+      active: p.active
     });
     setProductFormError(null);
     setProductModalOpen(true);
@@ -150,14 +157,32 @@ export default function AdminProductsPage() {
       setProductFormError('Preencha os campos obrigatórios (*)');
       return;
     }
+
+    const parsedBasePrice = parseNumber(productForm.basePrice);
+    if (parsedBasePrice === null) {
+      setProductFormError('Preço Base é obrigatório e deve ser um número válido (ex: 120,50)');
+      return;
+    }
+
     setProductSaving(true);
     setProductFormError(null);
+
+    const payload = {
+      ...productForm,
+      basePrice: parsedBasePrice,
+      basePromoPrice: parseNumber(productForm.basePromoPrice),
+      wholesalePrice: parseNumber(productForm.wholesalePrice),
+      minWholesaleQty: parseNumber(productForm.minWholesaleQty),
+      baseStock: parseNumber(productForm.baseStock) ?? 0,
+      weight: parseNumber(productForm.weight) ?? 0,
+    };
+
     try {
       const url = editingProduct ? `/api/admin/products/${editingProduct}` : '/api/admin/products';
       const method = editingProduct ? 'PATCH' : 'POST';
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productForm),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) { setProductFormError(data.error); return; }
@@ -193,9 +218,15 @@ export default function AdminProductsPage() {
     setParentProductId(productId);
     setEditingFlavor(f.id);
     setFlavorForm({
-      name: f.name, imageUrl: f.imageUrl || '', price: f.price, wholesalePrice: f.wholesalePrice,
-      stock: f.stock, sku: f.sku, description: f.description || '',
-      active: f.active, displayOrder: f.displayOrder
+      name: f.name,
+      imageUrl: f.imageUrl || '',
+      price: f.price ?? '',
+      wholesalePrice: f.wholesalePrice ?? '',
+      stock: f.stock ?? '',
+      sku: f.sku,
+      description: f.description || '',
+      active: f.active,
+      displayOrder: f.displayOrder
     });
     setFlavorFormError(null);
     setFlavorModalOpen(true);
@@ -208,14 +239,21 @@ export default function AdminProductsPage() {
     }
     setFlavorSaving(true);
     setFlavorFormError(null);
+
+    const payload = {
+      ...flavorForm,
+      productId: parentProductId,
+      price: parseNumber(flavorForm.price),
+      wholesalePrice: parseNumber(flavorForm.wholesalePrice),
+      stock: parseNumber(flavorForm.stock) ?? 0,
+    };
+
     try {
       const url = editingFlavor ? `/api/admin/flavors/${editingFlavor}` : '/api/admin/flavors';
       const method = editingFlavor ? 'PATCH' : 'POST';
-      const bodyData = { ...flavorForm, productId: parentProductId };
-      
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) { setFlavorFormError(data.error); return; }
@@ -396,22 +434,22 @@ export default function AdminProductsPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Preço Base (R$) *</label>
-                  <input type="number" step="0.01" value={productForm.basePrice} onChange={(e) => setProductForm({...productForm, basePrice: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" placeholder="0.00" />
+                  <input type="text" inputMode="decimal" value={productForm.basePrice ?? ''} onChange={(e) => setProductForm({...productForm, basePrice: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Ex: 120,50" />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Preço Promocional (R$)</label>
-                  <input type="number" step="0.01" value={productForm.basePromoPrice ?? ''} onChange={(e) => setProductForm({...productForm, basePromoPrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Opcional" />
+                  <input type="text" inputMode="decimal" value={productForm.basePromoPrice ?? ''} onChange={(e) => setProductForm({...productForm, basePromoPrice: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-sky-500" placeholder="Ex: 99,90" />
                 </div>
 
                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-purple-50 rounded-2xl border border-purple-100">
                   <div>
                     <label className="block text-xs font-bold text-purple-900 mb-1">Preço de Atacado (R$)</label>
-                    <input type="number" step="0.01" value={productForm.wholesalePrice ?? ''} onChange={(e) => setProductForm({...productForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 50.00" />
+                    <input type="text" inputMode="decimal" value={productForm.wholesalePrice ?? ''} onChange={(e) => setProductForm({...productForm, wholesalePrice: e.target.value})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 50,00" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-purple-900 mb-1">Qtd Mín. Atacado</label>
-                    <input type="number" value={productForm.minWholesaleQty ?? ''} onChange={(e) => setProductForm({...productForm, minWholesaleQty: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 10" />
+                    <input type="text" inputMode="numeric" value={productForm.minWholesaleQty ?? ''} onChange={(e) => setProductForm({...productForm, minWholesaleQty: e.target.value})} className="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 10" />
                   </div>
                 </div>
 
@@ -448,7 +486,7 @@ export default function AdminProductsPage() {
                 {!productForm.hasFlavors && (
                   <div className="md:col-span-2">
                     <label className="block text-xs font-bold text-slate-700 mb-1">Estoque Inicial (Sem sabor)</label>
-                    <input type="number" value={productForm.baseStock} onChange={(e) => setProductForm({...productForm, baseStock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-sky-500" />
+                    <input type="text" inputMode="numeric" value={productForm.baseStock ?? ''} onChange={(e) => setProductForm({...productForm, baseStock: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-sky-500" placeholder="0" />
                   </div>
                 )}
               </div>
@@ -493,16 +531,17 @@ export default function AdminProductsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Estoque</label>
-                  <input type="number" value={flavorForm.stock} onChange={(e) => setFlavorForm({...flavorForm, stock: Number(e.target.value)})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-purple-500" />
+                  <input type="text" inputMode="numeric" value={flavorForm.stock ?? ''} onChange={(e) => setFlavorForm({...flavorForm, stock: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-purple-500" placeholder="0" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Preço Varejo Especial</label>
-                  <input type="number" step="0.01" value={flavorForm.price ?? ''} onChange={(e) => setFlavorForm({...flavorForm, price: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-purple-500" placeholder="Ex: 10.00" />
+                  <input type="text" inputMode="decimal" value={flavorForm.price ?? ''} onChange={(e) => setFlavorForm({...flavorForm, price: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-purple-500" placeholder="Ex: 10,00" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-purple-900 mb-1">Preço Atacado Especial</label>
-                  <input type="number" step="0.01" value={flavorForm.wholesalePrice ?? ''} onChange={(e) => setFlavorForm({...flavorForm, wholesalePrice: e.target.value ? Number(e.target.value) : null})} className="w-full rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Caso este sabor tenha preço diferente no atacado" />
+                  <input type="text" inputMode="decimal" value={flavorForm.wholesalePrice ?? ''} onChange={(e) => setFlavorForm({...flavorForm, wholesalePrice: e.target.value})} className="w-full rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:border-purple-500 focus:outline-none" placeholder="Ex: 8,50" />
                 </div>
+              </div>
               </div>
               <div>
                 <ImageUploadInput
