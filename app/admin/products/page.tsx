@@ -14,9 +14,9 @@ interface FlavorData {
   productId: string;
   name: string;
   imageUrl: string | null;
-  price: number | null;
-  wholesalePrice: number | null;
-  stock: number;
+  price: number | string | null;
+  wholesalePrice: number | string | null;
+  stock: number | string;
   sku: string;
   description: string | null;
   displayOrder: number;
@@ -313,7 +313,7 @@ export default function AdminProductsPage() {
         <div className="space-y-4">
           {filtered.map(product => {
             const isExpanded = expandedProducts[product.id];
-            const stockTotal = product.hasFlavors ? product.flavors.reduce((acc, f) => acc + f.stock, 0) : product.baseStock;
+            const stockTotal = product.hasFlavors ? product.flavors.reduce((acc, f) => acc + (parseNumber(f.stock) ?? 0), 0) : product.baseStock;
             
             return (
               <div key={product.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-4 sm:p-5">
