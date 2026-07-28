@@ -26,6 +26,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.weight !== undefined) updateData.weight = parseNumber(body.weight) ?? 0;
     if (body.active !== undefined) updateData.active = Boolean(body.active);
 
+    // Batch update flavors if provided in body
+    if (Array.isArray(body.flavors) && body.flavors.length > 0) {
+      for (const f of body.flavors) {
+        if (f.id) {
+          await db.flavor.update({
+            where: { id: f.id },
+            data: {
+              ...(f.name && { name: f.name }),
+              ...(f.sku && { sku: f.sku }),
+              ...(f.price !== undefined && { price: parseNumber(f.price) }),
+              ...(f.wholesalePrice !== undefined && { wholesalePrice: parseNumber(f.wholesalePrice) }),
+              ...(f.stock !== undefined && { stock: parseNumber(f.stock) ?? 0 }),
+              ...(f.active !== undefined && { active: Boolean(f.active) }),
+            },
+          });
+        }
+      }
+    }
+
     const product = await db.product.update({
       where: { id },
       data: updateData,

@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Package, Plus, Pencil, Trash2, X, Save, Loader2,
   Search, AlertCircle, GripVertical, Image as ImageIcon,
-  Tag, BarChart, ChevronDown, ChevronUp
+  Tag, BarChart, ChevronDown, ChevronUp, Sparkles
 } from 'lucide-react';
 import { formatCurrency, getCleanImageUrl, parseNumber } from '@/lib/utils';
 import { ImageUploadInput } from '@/components/admin/ImageUploadInput';
@@ -80,6 +80,7 @@ export default function AdminProductsPage() {
   const [productForm, setProductForm] = useState(emptyProductForm);
   const [productSaving, setProductSaving] = useState(false);
   const [productFormError, setProductFormError] = useState<string | null>(null);
+  const [editableFlavors, setEditableFlavors] = useState<FlavorData[]>([]);
 
   // Flavor Modal
   const [flavorModalOpen, setFlavorModalOpen] = useState(false);
@@ -127,6 +128,7 @@ export default function AdminProductsPage() {
   const openCreateProduct = () => {
     setEditingProduct(null);
     setProductForm(emptyProductForm);
+    setEditableFlavors([]);
     setProductFormError(null);
     setProductModalOpen(true);
   };
@@ -148,6 +150,7 @@ export default function AdminProductsPage() {
       weight: p.weight,
       active: p.active
     });
+    setEditableFlavors(p.flavors ? p.flavors.map(f => ({ ...f })) : []);
     setProductFormError(null);
     setProductModalOpen(true);
   };
@@ -175,6 +178,7 @@ export default function AdminProductsPage() {
       minWholesaleQty: parseNumber(productForm.minWholesaleQty),
       baseStock: parseNumber(productForm.baseStock) ?? 0,
       weight: parseNumber(productForm.weight) ?? 0,
+      flavors: editableFlavors,
     };
 
     try {
@@ -544,6 +548,124 @@ export default function AdminProductsPage() {
                   <div className="md:col-span-2">
                     <label className="block text-xs font-bold text-slate-700 mb-1">Estoque Inicial (Sem sabor)</label>
                     <input type="text" inputMode="numeric" value={productForm.baseStock ?? ''} onChange={(e) => setProductForm({...productForm, baseStock: e.target.value})} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:border-sky-500" placeholder="0" />
+                  </div>
+                )}
+
+                {/* --- BULK FLAVOR EDITING SECTION --- */}
+                {editingProduct && productForm.hasFlavors && editableFlavors.length > 0 && (
+                  <div className="md:col-span-2 p-4 sm:p-5 bg-purple-50/70 border border-purple-200 rounded-3xl space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-200/60 pb-3">
+                      <div>
+                        <h3 className="text-xs font-black uppercase tracking-wider text-purple-900 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+                          <span>Edição de Sabores em Lote ({editableFlavors.length} sabores)</span>
+                        </h3>
+                        <p className="text-[11px] text-purple-700 mt-0.5">
+                          Edite estoque ou preços de todos os sabores diretamente aqui, ou aplique valores em massa.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = prompt('Informe o estoque para aplicar a TODOS os sabores:');
+                            if (val !== null && val.trim() !== '') {
+                              setEditableFlavors(prev => prev.map(f => ({ ...f, stock: val })));
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-purple-200 hover:bg-purple-300 text-purple-900 text-[11px] font-black transition-colors"
+                        >
+                          ⚡ Estoque em Massa
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = prompt('Informe o Preço de Atacado Especial para TODOS os sabores (deixe em branco para limpar):');
+                            if (val !== null) {
+                              setEditableFlavors(prev => prev.map(f => ({ ...f, wholesalePrice: val })));
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-purple-200 hover:bg-purple-300 text-purple-900 text-[11px] font-black transition-colors"
+                        >
+                          ⚡ Atacado em Massa
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Flavors Grid List */}
+                    <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                      {editableFlavors.map((flavor, index) => (
+                        <div
+                          key={flavor.id}
+                          className="p-3 bg-white border border-purple-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                        >
+                          <div className="flex items-center gap-2 min-w-0 sm:w-1/3">
+                            <span className="text-[10px] font-mono font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md shrink-0">
+                              #{index + 1}
+                            </span>
+                            <input
+                              type="text"
+                              value={flavor.name}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditableFlavors(prev => prev.map((f, i) => i === index ? { ...f, name: val } : f));
+                              }}
+                              className="w-full text-xs font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-purple-500"
+                              placeholder="Nome do sabor"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 flex-1">
+                            <div>
+                              <label className="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Estoque</label>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={flavor.stock ?? ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditableFlavors(prev => prev.map((f, i) => i === index ? { ...f, stock: val } : f));
+                                }}
+                                className="w-full text-xs font-mono font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                                placeholder="0"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Preço Varejo</label>
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={flavor.price ?? ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditableFlavors(prev => prev.map((f, i) => i === index ? { ...f, price: val } : f));
+                                }}
+                                className="w-full text-xs font-mono text-slate-900 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                                placeholder="Base"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[9px] font-bold text-purple-900 uppercase mb-0.5">Preço Atacado</label>
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={flavor.wholesalePrice ?? ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditableFlavors(prev => prev.map((f, i) => i === index ? { ...f, wholesalePrice: val } : f));
+                                }}
+                                className="w-full text-xs font-mono text-slate-900 bg-purple-50/50 border border-purple-200 rounded-xl px-2 py-1.5 focus:outline-none focus:border-purple-500"
+                                placeholder="Base"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
