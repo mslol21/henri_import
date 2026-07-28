@@ -312,43 +312,84 @@ export default function AdminProductsPage() {
             const stockTotal = product.hasFlavors ? product.flavors.reduce((acc, f) => acc + f.stock, 0) : product.baseStock;
             
             return (
-              <div key={product.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <img src={getCleanImageUrl(product.mainImageUrl)} alt={product.name} className="w-14 h-14 object-cover rounded-xl border border-slate-100 bg-slate-50" />
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black uppercase text-sky-600 tracking-wider bg-sky-50 px-2 py-0.5 rounded-full">{product.category.name}</span>
-                        {!product.active && <span className="text-[10px] font-black uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">Inativo</span>}
+              <div key={product.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  {/* Product Info */}
+                  <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+                    <img
+                      src={getCleanImageUrl(product.mainImageUrl)}
+                      alt={product.name}
+                      className="w-14 h-14 object-cover rounded-2xl border border-slate-100 bg-slate-50 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-[10px] font-black uppercase text-sky-600 tracking-wider bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
+                          {product.category.name}
+                        </span>
+                        {product.brand && (
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            {product.brand}
+                          </span>
+                        )}
+                        {!product.active && (
+                          <span className="text-[10px] font-black uppercase text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            Inativo
+                          </span>
+                        )}
                       </div>
-                      <h3 className="text-sm font-black text-slate-900">{product.name}</h3>
-                      <div className="flex gap-3 text-xs text-slate-500 mt-1 font-mono">
+                      <h3 className="text-sm sm:text-base font-black text-slate-900 truncate">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs text-slate-500 mt-1 font-mono flex-wrap">
                         <span>SKU: {product.baseSku}</span>
-                        <span>|</span>
-                        <span>{formatCurrency(product.basePrice)}</span>
-                        <span>|</span>
+                        <span>•</span>
+                        <span className="font-bold text-slate-800">{formatCurrency(product.basePrice)}</span>
+                        <span>•</span>
                         <span>Estoque: {stockTotal}</span>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-2">
+
+                  {/* Action Buttons Row */}
+                  <div className="flex items-center justify-end gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
                     {product.hasFlavors && (
-                      <button onClick={() => toggleExpand(product.id)} className="px-3 py-1.5 flex items-center gap-1.5 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100">
-                        {isExpanded ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
-                        Sabores ({product.flavors.length})
+                      <button
+                        onClick={() => toggleExpand(product.id)}
+                        className="px-3 py-2 flex items-center gap-1.5 bg-purple-50 text-purple-700 rounded-xl text-xs font-bold hover:bg-purple-100 transition-colors border border-purple-200/60"
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-purple-600 shrink-0" /> : <ChevronDown className="w-4 h-4 text-purple-600 shrink-0" />}
+                        <span>Sabores ({product.flavors.length})</span>
                       </button>
                     )}
-                    <button onClick={() => openEditProduct(product)} className="w-8 h-8 flex items-center justify-center bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100"><Pencil className="w-4 h-4"/></button>
-                    <button onClick={() => deleteProduct(product.id)} disabled={deletingId === product.id} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 disabled:opacity-50">
-                      {deletingId === product.id ? <Loader2 className="w-4 h-4 animate-spin"/> : <Trash2 className="w-4 h-4"/>}
+
+                    <button
+                      onClick={() => openEditProduct(product)}
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-xl text-xs font-black transition-colors border border-sky-200/60"
+                      title="Editar Produto"
+                    >
+                      <Pencil className="w-4 h-4 text-sky-600 shrink-0" />
+                      <span>Editar</span>
+                    </button>
+
+                    <button
+                      onClick={() => deleteProduct(product.id)}
+                      disabled={deletingId === product.id}
+                      className="p-2 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl transition-colors disabled:opacity-50 border border-red-200/60"
+                      title="Excluir Produto"
+                    >
+                      {deletingId === product.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-red-600" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      )}
                     </button>
                   </div>
                 </div>
 
+                {/* Flavors List Section */}
                 {isExpanded && product.hasFlavors && (
-                  <div className="bg-slate-50 border-t border-slate-100 p-5">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="bg-slate-50 border-t border-slate-100 p-4 sm:p-5 mt-4 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5">
+                    <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-black uppercase text-slate-500 tracking-wider">Sabores / Variações</h4>
                       <button onClick={() => openCreateFlavor(product.id)} className="text-xs font-bold text-purple-600 flex items-center gap-1 hover:text-purple-700">
                         <Plus className="w-3.5 h-3.5"/> Adicionar Sabor
@@ -357,19 +398,35 @@ export default function AdminProductsPage() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {product.flavors.map(flavor => (
-                        <div key={flavor.id} className={`flex items-center justify-between p-3 bg-white border border-slate-200 rounded-2xl ${!flavor.active ? 'opacity-60':''}`}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
-                              {flavor.imageUrl ? <img src={flavor.imageUrl} className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-slate-300"/>}
+                        <div key={flavor.id} className={`flex items-center justify-between p-3 bg-white border border-slate-200 rounded-2xl gap-3 ${!flavor.active ? 'opacity-60':''}`}>
+                          <div className="flex items-center gap-3 min-w-0 pr-2">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 border border-slate-200">
+                              {getCleanImageUrl(flavor.imageUrl, '') ? (
+                                <img src={getCleanImageUrl(flavor.imageUrl)!} className="w-full h-full object-cover" />
+                              ) : (
+                                <Package className="w-5 h-5 text-slate-400"/>
+                              )}
                             </div>
-                            <div>
-                              <p className="text-xs font-bold text-slate-900">{flavor.name}</p>
-                              <p className="text-[10px] text-slate-500 font-mono mt-0.5">SKU: {flavor.sku} | Est: {flavor.stock} {flavor.price ? `| ${formatCurrency(flavor.price)}` : ''}</p>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate">{flavor.name}</p>
+                              <p className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">SKU: {flavor.sku} | Est: {flavor.stock} {flavor.price ? `| ${formatCurrency(flavor.price)}` : ''}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => openEditFlavor(product.id, flavor)} className="p-1.5 text-slate-400 hover:text-sky-600 bg-slate-50 rounded-lg"><Pencil className="w-3.5 h-3.5"/></button>
-                            <button onClick={() => deleteFlavor(flavor.id)} disabled={deletingFlavorId === flavor.id} className="p-1.5 text-slate-400 hover:text-red-500 bg-slate-50 rounded-lg">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => openEditFlavor(product.id, flavor)}
+                              className="flex items-center gap-1 px-2.5 py-1.5 text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200/60 rounded-xl text-xs font-bold transition-colors"
+                              title="Editar Sabor"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-sky-600"/>
+                              <span>Editar</span>
+                            </button>
+                            <button
+                              onClick={() => deleteFlavor(flavor.id)}
+                              disabled={deletingFlavorId === flavor.id}
+                              className="p-1.5 text-red-500 bg-red-50 hover:bg-red-100 border border-red-200/60 rounded-xl transition-colors"
+                              title="Excluir Sabor"
+                            >
                               {deletingFlavorId === flavor.id ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Trash2 className="w-3.5 h-3.5"/>}
                             </button>
                           </div>

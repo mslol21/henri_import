@@ -237,10 +237,11 @@ export default function AdminCategoriesPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => openEdit(cat)}
-                      className="h-8 w-8 flex items-center justify-center rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
-                      title="Editar"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200/60 text-xs font-black transition-colors"
+                      title="Editar Categoria"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5 text-sky-600 shrink-0" />
+                      <span>Editar</span>
                     </button>
                     <button
                       onClick={() => handleDelete(cat.id)}
