@@ -12,7 +12,7 @@ import { isWholesaleUser } from '@/lib/auth';
 export default async function LandingPage() {
   const categories = await getCategories();
   const allProducts = await getProducts();
-  const isWholesale = await isWholesaleUser();
+  const isWholesale = false; // Initial landing page ALWAYS displays retail prices only
 
   // Filter sections
   const featuredProducts = allProducts.length > 0 ? allProducts : [];
@@ -48,7 +48,7 @@ export default async function LandingPage() {
           </div>
 
           {/* Automatic Infinite Carousel */}
-          <FeaturedCarousel products={featuredProducts} isWholesale={isWholesale} />
+          <FeaturedCarousel products={featuredProducts} isWholesale={false} />
         </div>
       </section>
 
@@ -75,7 +75,7 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {(bestSellers.length > 0 ? bestSellers : allProducts.slice(0, 4)).map((product) => (
-              <ProductCard key={product.id} product={product} isWholesale={isWholesale} />
+              <ProductCard key={product.id} product={product} isWholesale={false} />
             ))}
           </div>
         </div>

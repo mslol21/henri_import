@@ -29,7 +29,7 @@ export default function WholesaleLoginForm() {
         return;
       }
 
-      router.push('/?atacado=true');
+      router.push('/atacado');
       router.refresh();
     } catch (err) {
       setError('Erro de conexão. Tente novamente.');
