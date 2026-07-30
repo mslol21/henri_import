@@ -114,7 +114,7 @@ export function FeaturedCarousel({ products, isWholesale }: FeaturedCarouselProp
         {displayProducts.map((product, idx) => (
           <div
             key={`${product.id}-${idx}`}
-            className="w-[260px] sm:w-[290px] md:w-[310px] shrink-0 transform transition-transform hover:scale-[1.02]"
+            className="w-[220px] sm:w-[250px] md:w-[270px] shrink-0 transform transition-transform hover:scale-[1.02]"
           >
             <ProductCard product={product} isWholesale={isWholesale} />
           </div>
