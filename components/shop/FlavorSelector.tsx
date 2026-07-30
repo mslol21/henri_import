@@ -20,20 +20,17 @@ export function FlavorSelector({ product, isWholesale }: { product: ProductData;
   let defaultActivePrice = baseOrPromo;
   let isWholesalePriceApplied = false;
 
-  if (isWholesale && product.wholesalePrice && product.wholesalePrice < baseOrPromo) {
+  if (isWholesale && product.wholesalePrice && product.wholesalePrice > 0) {
     defaultActivePrice = product.wholesalePrice;
     isWholesalePriceApplied = true;
   }
 
   const getFlavorPrice = (f: FlavorData) => {
-    let p = f.price ?? baseOrPromo;
-    if (isWholesale && f.wholesalePrice && f.wholesalePrice < p) {
-      return f.wholesalePrice;
+    if (isWholesale) {
+      if (f.wholesalePrice && f.wholesalePrice > 0) return f.wholesalePrice;
+      if (product.wholesalePrice && product.wholesalePrice > 0) return product.wholesalePrice;
     }
-    if (isWholesale && !f.wholesalePrice && !f.price && isWholesalePriceApplied) {
-      return defaultActivePrice;
-    }
-    return p;
+    return f.price ?? baseOrPromo;
   };
 
   const minQty = 1;

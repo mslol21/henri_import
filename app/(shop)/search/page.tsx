@@ -5,6 +5,8 @@ import { ProductCard } from '@/components/shop/ProductCard';
 import { Search, Filter, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
+import { isWholesaleUser } from '@/lib/auth';
+
 interface SearchPageProps {
   searchParams: Promise<{
     q?: string;
@@ -22,6 +24,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const allProducts = await getProducts();
   const categories = await getCategories();
+  const isWholesale = await isWholesaleUser();
 
   // Filter products based on search parameters
   let filtered = allProducts.filter((p) => {
@@ -121,7 +124,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filtered.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} isWholesale={isWholesale} />
             ))}
           </div>
         )}

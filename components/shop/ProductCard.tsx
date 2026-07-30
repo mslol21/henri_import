@@ -8,13 +8,13 @@ import { Sparkles, ShoppingBag, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function ProductCard({ product, isWholesale }: { product: ProductData; isWholesale?: boolean }) {
-  const hasPromo = product.basePromoPrice && product.basePromoPrice < product.basePrice;
+  const hasPromo = Boolean(product.basePromoPrice && product.basePromoPrice < product.basePrice);
   const baseOrPromo = product.basePromoPrice ?? product.basePrice;
   
   let currentPrice = baseOrPromo;
   let isWholesalePriceApplied = false;
 
-  if (isWholesale && product.wholesalePrice && product.wholesalePrice < baseOrPromo) {
+  if (isWholesale && product.wholesalePrice && product.wholesalePrice > 0) {
     currentPrice = product.wholesalePrice;
     isWholesalePriceApplied = true;
   }
