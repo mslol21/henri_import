@@ -64,6 +64,8 @@ export function ProductCard({ product, isWholesale }: { product: ProductData; is
     setActiveIndex((prev) => (prev - 1 + slideItems.length) % slideItems.length);
   };
 
+  const productHref = isWholesale ? `/product/${product.slug}?atacado=true` : `/product/${product.slug}`;
+
   return (
     <motion.div
       whileHover={{ y: -3 }}
@@ -162,7 +164,7 @@ export function ProductCard({ product, isWholesale }: { product: ProductData; is
         </div>
 
         <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 group-hover:text-sky-600 transition-colors leading-snug">
-          <Link href={`/product/${product.slug}`}>
+          <Link href={productHref}>
             {product.name}
           </Link>
         </h3>
@@ -231,7 +233,7 @@ export function ProductCard({ product, isWholesale }: { product: ProductData; is
           </div>
 
           <Link
-            href={`/product/${product.slug}`}
+            href={productHref}
             className="flex items-center gap-1 text-xs font-bold text-sky-600 group-hover:text-sky-700 bg-sky-50 px-2.5 py-1.5 rounded-xl border border-sky-100 hover:bg-sky-600 hover:text-white transition-all shrink-0"
           >
             <span>{product.hasFlavors ? 'Escolher' : 'Ver'}</span>

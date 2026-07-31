@@ -9,12 +9,15 @@ import { isWholesaleUser } from '@/lib/auth';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ atacado?: string }>;
 }
 
-export default async function ProductDetailPage({ params }: ProductPageProps) {
+export default async function ProductDetailPage({ params, searchParams }: ProductPageProps) {
   const { slug } = await params;
+  const sParams = await searchParams;
   const product = await getProductBySlug(slug);
-  const isWholesale = await isWholesaleUser();
+  const userIsWholesale = await isWholesaleUser();
+  const isWholesale = Boolean(userIsWholesale && sParams?.atacado === 'true');
 
   if (!product) {
     notFound();

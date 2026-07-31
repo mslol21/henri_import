@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { ProductData, CategoryData } from '@/types';
 import { ProductCard } from '@/components/shop/ProductCard';
-import { Search, Sparkles, LogOut, PackageCheck, AlertCircle } from 'lucide-react';
+import { CategoryProductsSection } from '@/components/shop/CategoryProductsSection';
+import { Search, LogOut, PackageCheck, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function WholesaleCatalog({
@@ -48,6 +49,8 @@ export function WholesaleCatalog({
 
     return true;
   });
+
+  const isFiltering = Boolean(search || selectedCategory);
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 sm:py-12">
@@ -130,26 +133,43 @@ export function WholesaleCatalog({
           </div>
         </div>
 
-        {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
-          <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-4 max-w-md mx-auto my-12">
-            <Search className="h-12 w-12 text-slate-300 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-800">Nenhum produto encontrado no atacado</h3>
-            <p className="text-xs text-slate-500">
-              Tente buscar por outro termo ou limpe os filtros de categoria.
-            </p>
-            <button
-              onClick={() => { setSearch(''); setSelectedCategory(''); }}
-              className="inline-flex rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-purple-500 transition-colors"
-            >
-              Limpar Filtros
-            </button>
-          </div>
+        {/* Products Displayed by Category or Filtered Grid */}
+        {isFiltering ? (
+          filteredProducts.length === 0 ? (
+            <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-4 max-w-md mx-auto my-12">
+              <Search className="h-12 w-12 text-slate-300 mx-auto" />
+              <h3 className="text-lg font-bold text-slate-800">Nenhum produto encontrado no atacado</h3>
+              <p className="text-xs text-slate-500">
+                Tente buscar por outro termo ou limpe os filtros de categoria.
+              </p>
+              <button
+                onClick={() => { setSearch(''); setSelectedCategory(''); }}
+                className="inline-flex rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-purple-500 transition-colors"
+              >
+                Limpar Filtros
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} isWholesale={true} />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} isWholesale={true} />
-            ))}
+          <div className="space-y-4">
+            {categories.map((cat) => {
+              const catProducts = products.filter((p) => p.categoryId === cat.id || p.category?.slug === cat.slug);
+              if (catProducts.length === 0) return null;
+              return (
+                <CategoryProductsSection
+                  key={cat.id}
+                  category={cat}
+                  products={catProducts}
+                  isWholesale={true}
+                />
+              );
+            })}
           </div>
         )}
       </div>
