@@ -56,6 +56,21 @@ export async function POST(req: NextRequest) {
         gallery: gallery || [],
         weight: parseNumber(weight) ?? 0,
         active: active !== undefined ? Boolean(active) : true,
+        flavors: {
+          create: Array.isArray(body.flavors)
+            ? body.flavors.map((f: any, idx: number) => ({
+                name: f.name,
+                imageUrl: f.imageUrl || null,
+                price: parseNumber(f.price),
+                wholesalePrice: parseNumber(f.wholesalePrice),
+                stock: parseNumber(f.stock) ?? 0,
+                sku: f.sku || `${slug}-sabor-${idx + 1}-${Math.floor(Math.random() * 1000)}`,
+                description: f.description || null,
+                displayOrder: f.displayOrder ?? idx,
+                active: f.active !== undefined ? Boolean(f.active) : true,
+              }))
+            : [],
+        },
       },
       include: {
         category: { select: { name: true } },

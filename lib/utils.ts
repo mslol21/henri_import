@@ -30,9 +30,12 @@ export function formatDate(dateString: string | Date): string {
 }
 
 export function parseNumber(val: any): number | null {
-  if (val === null || val === undefined || val === '') return null;
+  if (val === null || val === undefined) return null;
   if (typeof val === 'number') return isNaN(val) ? null : val;
-  const clean = String(val).replace(',', '.').trim();
+  const str = String(val).trim();
+  if (str === '') return null;
+  // Strip currency symbols, whitespace, and standardize comma to dot
+  const clean = str.replace(/[^0-9,-.]/g, '').replace(',', '.');
   const parsed = parseFloat(clean);
   return isNaN(parsed) ? null : parsed;
 }
