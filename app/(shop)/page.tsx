@@ -8,6 +8,8 @@ import { getProducts } from '@/actions/products';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LandingPage() {
   const categories = await getCategories();
   const allProducts = await getProducts();

@@ -65,6 +65,15 @@ export function Navbar() {
 
         {/* Actions Right */}
         <div className="flex items-center gap-3">
+          {/* Promotions Button */}
+          <Link
+            href="/promotions"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-50 px-3.5 py-1.5 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition-all shadow-xs"
+          >
+            <Zap className="h-3.5 w-3.5 fill-current text-red-500" />
+            <span>Promoções</span>
+          </Link>
+
           {/* Wholesale Button */}
           <Link
             href="/atacado"
@@ -136,6 +145,20 @@ export function Navbar() {
               className="px-3 py-2 rounded-lg hover:bg-sky-50"
             >
               Início
+            </Link>
+
+            <Link
+              href="/promotions"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-2.5 rounded-xl bg-red-50 text-red-700 font-bold border border-red-200 flex items-center justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-red-600 fill-current" />
+                <span>Central de Promoções & Ofertas</span>
+              </span>
+              <span className="rounded-full bg-red-600 text-white px-2 py-0.5 text-[9px] font-black uppercase">
+                OFERTAS
+              </span>
             </Link>
 
             <Link
