@@ -145,7 +145,7 @@ export function FlavorSelector({ product, isWholesale }: { product: ProductData;
             {activeStock > 0 ? (
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
                 <Check className="h-3.5 w-3.5" />
-                <span>Em estoque ({activeStock} un)</span>
+                <span>Em estoque</span>
               </span>
             ) : (
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700 border border-red-200">
@@ -201,7 +201,7 @@ export function FlavorSelector({ product, isWholesale }: { product: ProductData;
                         {flavor.name}
                       </h4>
                       <span className="text-[10px] text-slate-500 font-medium">
-                        {flavor.stock > 0 ? `Estoque: ${flavor.stock}` : 'Esgotado'}
+                        {flavor.stock > 0 ? 'Disponível' : 'Esgotado'}
                       </span>
                     </div>
 

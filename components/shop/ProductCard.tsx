@@ -196,7 +196,7 @@ export function ProductCard({ product, isWholesale }: { product: ProductData; is
                         ? 'border-purple-600 bg-purple-100 text-purple-900 shadow-2xs ring-1 ring-purple-600/30'
                         : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
                     } ${flavor.stock <= 0 ? 'opacity-50 line-through' : ''}`}
-                    title={`${flavor.name} (Estoque: ${flavor.stock})`}
+                    title={`${flavor.name} ${flavor.stock > 0 ? '(Disponível)' : '(Esgotado)'}`}
                   >
                     {flavor.imageUrl && (
                       <img
