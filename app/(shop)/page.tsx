@@ -1,10 +1,12 @@
 import React from 'react';
 import { Hero } from '@/components/shop/Hero';
+import { HomepagePromotionsSection } from '@/components/shop/HomepagePromotionsSection';
 import { CategoryGrid } from '@/components/shop/CategoryGrid';
 import { FeaturedCarousel } from '@/components/shop/FeaturedCarousel';
 import { CategoryProductsSection } from '@/components/shop/CategoryProductsSection';
 import { getCategories } from '@/actions/categories';
 import { getProducts } from '@/actions/products';
+import { getActivePromotions, getPromoProducts } from '@/actions/promotions';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -13,18 +15,27 @@ export const dynamic = 'force-dynamic';
 export default async function LandingPage() {
   const categories = await getCategories();
   const allProducts = await getProducts();
+  const promoData = await getActivePromotions();
+  const promoProducts = await getPromoProducts();
 
   const featuredProducts = allProducts.length > 0 ? allProducts : [];
 
   return (
     <div className="space-y-0 min-h-screen bg-slate-50">
-      {/* 1. Hero */}
+      {/* 1. Hero Banner */}
       <Hero />
 
-      {/* 2. Categories Navigation Grid */}
+      {/* 2. PROMOÇÕES & OFERTAS LOGO APÓS O HERO */}
+      <HomepagePromotionsSection
+        coupons={promoData.coupons}
+        promoProducts={promoProducts}
+        isWholesale={false}
+      />
+
+      {/* 3. Categorias em Destaque em 1 Linha (Carrossel Horizontal) */}
       <CategoryGrid categories={categories} />
 
-      {/* 3. Continuous Automatic Featured Products Carousel */}
+      {/* 4. Continuous Automatic Featured Products Carousel */}
       <section id="produtos-destaque" className="py-10 sm:py-14 bg-white border-b border-slate-200/60 overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -50,7 +61,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* 4. Products Grouped By Category (Tabacaria Layout) */}
+      {/* 5. Products Grouped By Category (Tabacaria Layout) */}
       <div className="bg-slate-50 py-4">
         {categories.map((cat) => {
           const categoryProducts = allProducts.filter((p) => p.categoryId === cat.id || p.category?.slug === cat.slug);
