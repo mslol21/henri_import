@@ -78,6 +78,7 @@ export interface CartItem {
   selectedFlavor?: FlavorData | null;
   quantity: number;
   unitPrice: number;
+  isWholesale?: boolean;
   notes?: string;
   minQty?: number;
 }

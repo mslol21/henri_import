@@ -47,7 +47,7 @@ export function FlavorSelector({ product, isWholesale }: { product: ProductData;
   const activeSku = selectedFlavor ? selectedFlavor.sku : product.baseSku;
 
   const handleAddToCart = () => {
-    addToCart(product, selectedFlavor, quantity, notes, activePrice, minQty);
+    addToCart(product, selectedFlavor, quantity, notes, activePrice, minQty, Boolean(isWholesale));
     setAddedToast(true);
     setTimeout(() => setAddedToast(false), 2500);
   };

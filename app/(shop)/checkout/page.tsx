@@ -30,7 +30,7 @@ import {
 import Link from 'next/link';
 
 export default function CheckoutPage() {
-  const { items, subtotal, discount, total: cartTotal, clearCart, freeShippingGranted } = useCart();
+  const { items, subtotal, discount, total: cartTotal, clearCart, freeShippingGranted, hasWholesaleItems } = useCart();
   const { config } = useConfig();
   const router = useRouter();
 
@@ -54,7 +54,8 @@ export default function CheckoutPage() {
 
   const totalCartUnits = items.reduce((acc, item) => acc + item.quantity, 0);
   const minWholesaleTotal = 10;
-  const isWholesaleMinUnmet = isWholesale && totalCartUnits < minWholesaleTotal;
+  const isWholesaleSession = isWholesale || hasWholesaleItems || items.some((i) => i.isWholesale);
+  const isWholesaleMinUnmet = isWholesaleSession && totalCartUnits < minWholesaleTotal;
 
   const {
     register,

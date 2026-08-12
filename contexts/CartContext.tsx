@@ -11,7 +11,8 @@ interface CartContextType {
     quantity?: number,
     notes?: string,
     overrideUnitPrice?: number,
-    minQty?: number
+    minQty?: number,
+    isWholesaleItem?: boolean
   ) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
@@ -26,6 +27,7 @@ interface CartContextType {
   freeShippingGranted: boolean;
   total: number;
   itemCount: number;
+  hasWholesaleItems: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -39,12 +41,60 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
   const [freeShippingGranted, setFreeShippingGranted] = useState<boolean>(false);
 
-  // Load cart from localStorage on mount
+  // Helper to check if wholesale mode is active
+  const checkIsWholesaleActive = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return (
+      document.cookie.includes('wholesale_auth=true') ||
+      window.location.search.includes('atacado=true') ||
+      window.location.pathname.includes('/atacado')
+    );
+  };
+
+  // Helper: Sanitize & validate prices for retail vs wholesale
+  const sanitizeCartItems = (cartItems: CartItem[]): CartItem[] => {
+    const isWholesaleSession = checkIsWholesaleActive();
+
+    return cartItems.map((item) => {
+      const retailPrice = item.selectedFlavor?.price && item.selectedFlavor.price > 0
+        ? item.selectedFlavor.price
+        : item.product.basePromoPrice && item.product.basePromoPrice > 0
+        ? item.product.basePromoPrice
+        : item.product.basePrice;
+
+      const wholesalePrice = item.selectedFlavor?.wholesalePrice && item.selectedFlavor.wholesalePrice > 0
+        ? item.selectedFlavor.wholesalePrice
+        : item.product.wholesalePrice && item.product.wholesalePrice > 0
+        ? item.product.wholesalePrice
+        : retailPrice;
+
+      // If user is NOT in an authenticated wholesale session, ALWAYS force retail price
+      if (!isWholesaleSession || !item.isWholesale) {
+        return {
+          ...item,
+          unitPrice: retailPrice,
+          isWholesale: false,
+        };
+      }
+
+      return {
+        ...item,
+        unitPrice: wholesalePrice,
+        isWholesale: true,
+      };
+    });
+  };
+
+  // Load cart from localStorage on mount & sanitize prices
   useEffect(() => {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
-        setItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const sanitized = sanitizeCartItems(parsed);
+          setItems(sanitized);
+        }
       }
     } catch (e) {
       console.error('Failed to load cart from localStorage:', e);
@@ -66,9 +116,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     quantity = 1,
     notes = '',
     overrideUnitPrice?: number,
-    minQty: number = 1
+    minQty: number = 1,
+    isWholesaleItem = false
   ) => {
-    const unitPrice = overrideUnitPrice ?? flavor?.price ?? product.basePromoPrice ?? product.basePrice;
+    const isWholesaleSession = checkIsWholesaleActive() && isWholesaleItem;
+
+    const retailPrice = flavor?.price && flavor.price > 0
+      ? flavor.price
+      : product.basePromoPrice && product.basePromoPrice > 0
+      ? product.basePromoPrice
+      : product.basePrice;
+
+    const wholesalePrice = flavor?.wholesalePrice && flavor.wholesalePrice > 0
+      ? flavor.wholesalePrice
+      : product.wholesalePrice && product.wholesalePrice > 0
+      ? product.wholesalePrice
+      : retailPrice;
+
+    const unitPrice = isWholesaleSession
+      ? (overrideUnitPrice ?? wholesalePrice)
+      : retailPrice;
+
     const cartItemId = flavor ? `${product.id}-${flavor.id}` : product.id;
 
     setItems((prevItems) => {
@@ -82,6 +150,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updated[existingIndex] = {
           ...updated[existingIndex],
           quantity: Math.min(newQty, maxStock > 0 ? maxStock : 999),
+          unitPrice,
+          isWholesale: isWholesaleSession,
           notes: notes || updated[existingIndex].notes,
         };
         return updated;
@@ -95,6 +165,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           selectedFlavor: flavor,
           quantity,
           unitPrice,
+          isWholesale: isWholesaleSession,
           notes,
           minQty,
         },
@@ -135,6 +206,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const subtotal = items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
+  const hasWholesaleItems = items.some((item) => item.isWholesale);
 
   const applyCoupon = async (code: string) => {
     const clean = code.trim().toUpperCase();
@@ -194,6 +266,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         freeShippingGranted,
         total,
         itemCount,
+        hasWholesaleItems,
       }}
     >
       {children}
