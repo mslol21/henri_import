@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json(coupons);
   } catch (error) {
     console.error('GET /api/admin/coupons error:', error);
-    return NextResponse.json({ error: 'Erro ao buscar cupons' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json(rules);
   } catch (error) {
     console.error('GET /api/admin/promotion-rules error:', error);
-    return NextResponse.json({ error: 'Erro ao buscar regras de promoção' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

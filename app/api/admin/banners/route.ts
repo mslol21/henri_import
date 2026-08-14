@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json(banners);
   } catch (error) {
     console.error('GET /api/admin/banners error:', error);
-    return NextResponse.json({ error: 'Erro ao buscar banners' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 

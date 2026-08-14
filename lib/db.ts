@@ -6,11 +6,19 @@ const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
-  const isCloud = connectionString?.includes('supabase.com') || connectionString?.includes('pooler.supabase');
-  
+  const isLocalhost = Boolean(
+    !connectionString ||
+    connectionString.includes('localhost') ||
+    connectionString.includes('127.0.0.1')
+  );
+  const needsSsl = !isLocalhost;
+
   const pool = new pg.Pool({
     connectionString,
-    ssl: isCloud ? { rejectUnauthorized: false } : false,
+    ssl: needsSsl ? { rejectUnauthorized: false } : false,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
   });
 
   const adapter = new PrismaPg(pool);

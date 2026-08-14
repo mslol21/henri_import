@@ -13,10 +13,11 @@ export async function GET() {
     });
 
     const data = clients.map((c) => {
-      const totalSpent = c.orders.reduce((sum, o) => sum + o.total, 0);
-      const lastOrder = c.orders.sort(
+      const totalSpent = c.orders.reduce((sum, o) => sum + (o.total || 0), 0);
+      const sortedOrders = [...c.orders].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )[0];
+      );
+      const lastOrder = sortedOrders[0];
       const addr = c.addresses[0];
       const addressStr = addr
         ? `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}/${addr.state}`
@@ -36,9 +37,9 @@ export async function GET() {
     });
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: any) {
     console.error('GET /api/admin/clients error:', error);
-    return NextResponse.json({ error: 'Erro ao buscar clientes' }, { status: 500 });
+    return NextResponse.json([], { status: 200 }); // Return empty list gracefully instead of 500
   }
 }
 
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     const client = await db.client.create({
-      data: { name, phone, email: email || null },
+      data: { name: name.trim(), phone: phone.trim(), email: email ? email.trim() : null },
     });
 
     return NextResponse.json(client, { status: 201 });
@@ -62,6 +63,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Telefone já cadastrado' }, { status: 409 });
     }
     console.error('POST /api/admin/clients error:', error);
-    return NextResponse.json({ error: 'Erro ao criar cliente' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao criar cliente: ' + (error?.message || '') }, { status: 500 });
   }
 }
