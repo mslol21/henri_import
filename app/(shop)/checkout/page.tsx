@@ -163,6 +163,12 @@ export default function CheckoutPage() {
         deliveryInfo?.distanceKm
       );
 
+      if (!result.success) {
+        alert(result.error || 'Erro ao registrar pedido no sistema.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // 3. Build WhatsApp payload & message
       const whatsappPayload: OrderWhatsAppPayload = {
         orderNumber: result.orderNumber,
