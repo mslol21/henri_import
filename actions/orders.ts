@@ -204,6 +204,8 @@ export async function getOrders(statusFilter?: string) {
       },
       items: o.items.map((i) => ({
         id: i.id,
+        productId: i.productId,
+        flavorId: i.flavorId,
         productName: i.product?.name || 'Produto',
         flavorName: i.flavor ? i.flavor.name : null,
         quantity: i.quantity,
@@ -254,6 +256,18 @@ export async function updateOrderStatus(
 
     return { success: true, order: updated };
   } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function deleteOrder(orderId: string) {
+  try {
+    await db.orderItem.deleteMany({ where: { orderId } });
+    await db.orderHistory.deleteMany({ where: { orderId } });
+    await db.order.delete({ where: { id: orderId } });
+    return { success: true };
+  } catch (err: any) {
+    console.error('Error deleting order:', err);
     return { success: false, error: err.message };
   }
 }
