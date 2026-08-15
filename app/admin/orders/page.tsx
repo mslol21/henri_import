@@ -25,6 +25,7 @@ import {
   Plus,
   Save,
   DollarSign,
+  MessageSquare,
 } from 'lucide-react';
 
 interface OrderItemUI {
@@ -72,6 +73,78 @@ const statusBadgeMap: Record<OrderStatusType, { label: string; bg: string; text:
   CANCELLED: { label: 'Cancelado', bg: 'bg-red-100 border border-red-300', text: 'text-red-700 font-black' },
 };
 
+// Helper: Format WhatsApp status notification link
+const getWhatsAppMessageForStatus = (order: OrderUI, status: OrderStatusType) => {
+  const cleanPhone = order.client.phone.replace(/\D/g, '');
+  const itemsText =
+    order.items && order.items.length > 0
+      ? order.items
+          .map(
+            (i) =>
+              `• *${i.quantity}x ${i.productName}*${i.flavorName ? ` (Sabor: ${i.flavorName})` : ''} - ${formatCurrency(i.price * i.quantity)}`
+          )
+          .join('\n')
+      : 'Nenhum item especificado';
+
+  const addressText = `${order.address.street}, Nº ${order.address.number}${
+    order.address.complement ? ` - ${order.address.complement}` : ''
+  }, ${order.address.neighborhood}, ${order.address.city}/${order.address.state} - CEP ${order.address.cep}`;
+
+  const statusLabels: Record<OrderStatusType, string> = {
+    NEW: 'Novo Pedido (Aguardando Aprovação)',
+    CONFIRMED: 'Confirmado / Aprovado',
+    PREPARING: 'Em Separação',
+    SHIPPED: 'Saiu para Entrega',
+    DELIVERED: 'Entregue',
+    CANCELLED: 'Cancelado',
+  };
+
+  const statusLabel = statusLabels[status] || status;
+
+  let title = '📋 *INFORMAÇÕES DO SEU PEDIDO*';
+  let bodyMsg = `O status atual do seu pedido é: *${statusLabel}*`;
+
+  if (status === 'CONFIRMED') {
+    title = '✅ *PEDIDO APROVADO COM SUCESSO!*';
+    bodyMsg = 'Seu pedido foi *confirmado e aprovado* pela nossa equipe! Já estamos preparando tudo para envio. 🚀';
+  } else if (status === 'PREPARING') {
+    title = '📦 *PEDIDO EM SEPARAÇÃO!*';
+    bodyMsg = 'Seu pedido já está sendo *embalado e preparado* com carinho para envio!';
+  } else if (status === 'SHIPPED') {
+    title = '🛵 *PEDIDO SAIU PARA ENTREGA!*';
+    bodyMsg = 'Seu pedido *saiu com o entregador* e chegará em breve no seu endereço!';
+  } else if (status === 'DELIVERED') {
+    title = '🎉 *PEDIDO ENTREGUE!*';
+    bodyMsg = 'Seu pedido foi *entregue com sucesso*! Agradecemos pela preferência e volte sempre.';
+  } else if (status === 'CANCELLED') {
+    title = '❌ *PEDIDO CANCELADO*';
+    bodyMsg = 'Informamos que seu pedido foi *cancelado*. Se tiver dúvidas, entre em contato conosco.';
+  }
+
+  const text = `${title}
+
+Olá *${order.client.name}*!
+
+${bodyMsg}
+
+📌 *Status Atual:* ${statusLabel}
+🔢 *Número do Pedido:* #${order.number}
+
+📋 *RESUMO DOS ITENS:*
+${itemsText}
+
+📍 *ENDEREÇO DE ENTREGA:*
+${addressText}
+
+💳 *Forma de Pagamento:* ${order.paymentMethod}
+🚚 *Taxa de Entrega:* ${formatCurrency(order.deliveryFee)}
+💰 *VALOR TOTAL DO PEDIDO:* ${formatCurrency(order.total)}
+
+Muito obrigado por comprar na *Henri Imports Tabacaria & Vapes*!`;
+
+  return `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(text)}`;
+};
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderUI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +161,7 @@ export default function AdminOrdersPage() {
   const [notification, setNotification] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setNotification(msg);
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => setNotification(null), 3500);
   };
 
   const fetchOrders = useCallback(async () => {
@@ -116,15 +189,52 @@ export default function AdminOrdersPage() {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatusType, notes?: string) => {
-    setUpdatingId(orderId);
+  // Handle Order Approval & Auto WhatsApp Confirmation
+  const handleApproveOrder = async (order: OrderUI) => {
+    setUpdatingId(order.id);
     try {
-      const res = await updateOrderStatus(orderId, newStatus, notes);
+      const res = await updateOrderStatus(order.id, 'CONFIRMED', 'Pedido aprovado pelo administrador');
       if (res.success) {
-        showToast(`Status do pedido alterado para ${newStatus}!`);
+        showToast(`Pedido #${order.number} APROVADO! Redirecionando para o WhatsApp do cliente...`);
         setOrders((prev) =>
           prev.map((o) => {
-            if (o.id === orderId) {
+            if (o.id === order.id) {
+              const newHist = [
+                ...o.history,
+                {
+                  id: `hist-${Date.now()}`,
+                  status: 'CONFIRMED' as OrderStatusType,
+                  changedBy: 'Admin',
+                  createdAt: new Date().toISOString(),
+                  notes: 'Pedido aprovado pelo administrador',
+                },
+              ];
+              return { ...o, status: 'CONFIRMED' as OrderStatusType, history: newHist };
+            }
+            return o;
+          })
+        );
+
+        // Open WhatsApp with order approval message automatically
+        const waUrl = getWhatsAppMessageForStatus(order, 'CONFIRMED');
+        window.open(waUrl, '_blank');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleStatusChange = async (order: OrderUI, newStatus: OrderStatusType, notes?: string) => {
+    setUpdatingId(order.id);
+    try {
+      const res = await updateOrderStatus(order.id, newStatus, notes);
+      if (res.success) {
+        showToast(`Status do pedido #${order.number} alterado para ${newStatus}!`);
+        setOrders((prev) =>
+          prev.map((o) => {
+            if (o.id === order.id) {
               const newHist = [
                 ...o.history,
                 {
@@ -256,7 +366,7 @@ export default function AdminOrdersPage() {
             PAINEL DE CONTROLE • ENTREGAS & PEDIDOS
           </span>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight sm:text-3xl mt-0.5">
-            Gestão, Edição & Exclusão de Pedidos
+            Gestão & Aprovação de Pedidos
           </h1>
         </div>
 
@@ -286,7 +396,7 @@ export default function AdminOrdersPage() {
                   : `Existem ${pendingCount} novos pedidos aguardando aprovação!`}
               </h3>
               <p className="text-xs text-purple-200 mt-0.5">
-                Revise os itens, altere dados se necessário ou clique em "Aprovar Pedido".
+                Clique em "Aprovar Pedido" para confirmar e enviar a mensagem no WhatsApp do cliente automaticamente.
               </p>
             </div>
           </div>
@@ -345,10 +455,7 @@ export default function AdminOrdersPage() {
             const badge = statusBadgeMap[order.status] || statusBadgeMap.NEW;
             const isExpanded = expandedOrderId === order.id;
             const isPendingApproval = order.status === 'NEW';
-            const cleanPhone = order.client.phone.replace(/\D/g, '');
-            const waUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(
-              `Olá ${order.client.name}! Sou da Henri Imports referente ao seu Pedido #${order.number} no valor de ${formatCurrency(order.total)}.`
-            )}`;
+            const statusWaUrl = getWhatsAppMessageForStatus(order, order.status);
 
             return (
               <div
@@ -374,21 +481,21 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  {/* Actions & Status Dropdown */}
+                  {/* Actions & Status Controls */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Approve Button if pending */}
                     {isPendingApproval && (
                       <button
-                        onClick={() => handleStatusChange(order.id, 'CONFIRMED', 'Pedido aprovado pelo administrador')}
+                        onClick={() => handleApproveOrder(order)}
                         disabled={updatingId === order.id}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-3.5 py-2 shadow-md transition-all disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-3.5 py-2 shadow-md transition-all disabled:opacity-50 hover:scale-105"
                       >
                         {updatingId === order.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Check className="h-4 w-4" />
                         )}
-                        <span>Aprovar Pedido</span>
+                        <span>Aprovar Pedido & Notificar WhatsApp</span>
                       </button>
                     )}
 
@@ -413,21 +520,22 @@ export default function AdminOrdersPage() {
                       <span>Excluir</span>
                     </button>
 
-                    {/* WhatsApp Chat Link */}
+                    {/* WhatsApp Status Confirmation Button */}
                     <a
-                      href={waUrl}
+                      href={statusWaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs px-3 py-2 transition-all"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs px-3.5 py-2 transition-all"
+                      title="Enviar Mensagem de Status pelo WhatsApp"
                     >
                       <Phone className="h-3.5 w-3.5 fill-current" />
-                      <span>WhatsApp</span>
+                      <span>Notificar WhatsApp</span>
                     </a>
 
                     {/* Status Dropdown */}
                     <select
                       value={order.status}
-                      onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatusType)}
+                      onChange={(e) => handleStatusChange(order, e.target.value as OrderStatusType)}
                       disabled={updatingId === order.id}
                       className="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 focus:border-purple-600 focus:outline-none"
                     >
