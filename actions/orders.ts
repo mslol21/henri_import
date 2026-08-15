@@ -262,12 +262,18 @@ export async function updateOrderStatus(
 
 export async function deleteOrder(orderId: string) {
   try {
-    await db.orderItem.deleteMany({ where: { orderId } });
-    await db.orderHistory.deleteMany({ where: { orderId } });
     await db.order.delete({ where: { id: orderId } });
     return { success: true };
   } catch (err: any) {
-    console.error('Error deleting order:', err);
-    return { success: false, error: err.message };
+    console.error('Error deleting order (attempt 1):', err);
+    try {
+      // Retry once after 200ms delay in case of connection pool glitch
+      await new Promise((res) => setTimeout(res, 200));
+      await db.order.delete({ where: { id: orderId } });
+      return { success: true };
+    } catch (retryErr: any) {
+      console.error('Error deleting order (retry):', retryErr);
+      return { success: false, error: retryErr.message || 'Erro de conexão no banco de dados' };
+    }
   }
 }

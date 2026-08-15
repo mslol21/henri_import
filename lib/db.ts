@@ -13,12 +13,13 @@ function createPrismaClient() {
   );
   const needsSsl = !isLocalhost;
 
+  // Serverless functions on Vercel must use low max pool size (max: 2) to avoid EMAXCONNSESSION
   const pool = new pg.Pool({
     connectionString,
     ssl: needsSsl ? { rejectUnauthorized: false } : false,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: process.env.NODE_ENV === 'production' ? 2 : 5,
+    idleTimeoutMillis: 15000,
+    connectionTimeoutMillis: 5000,
   });
 
   const adapter = new PrismaPg(pool);

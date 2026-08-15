@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { updateOrderStatus } from '@/actions/orders';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -113,14 +112,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-
-    // Delete items and history first
-    await db.orderItem.deleteMany({ where: { orderId: id } });
-    await db.orderHistory.deleteMany({ where: { orderId: id } });
-
-    // Delete order
     await db.order.delete({ where: { id } });
-
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('DELETE /api/admin/orders/[id] error:', error);
