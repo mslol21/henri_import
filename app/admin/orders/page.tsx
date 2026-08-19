@@ -26,7 +26,9 @@ import {
   Save,
   DollarSign,
   MessageSquare,
+  Printer,
 } from 'lucide-react';
+import ThermalPrintModal58mm from '@/components/admin/ThermalPrintModal58mm';
 
 interface OrderItemUI {
   id: string;
@@ -151,6 +153,9 @@ export default function AdminOrdersPage() {
   const [selectedFilter, setSelectedFilter] = useState<string>('ALL');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Thermal Print Modal State
+  const [printingOrder, setPrintingOrder] = useState<OrderUI | null>(null);
 
   // Edit Modal State
   const [editingOrder, setEditingOrder] = useState<OrderUI | null>(null);
@@ -518,6 +523,16 @@ export default function AdminOrdersPage() {
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       <span>Excluir</span>
+                    </button>
+
+                    {/* 58mm Thermal Printer Button */}
+                    <button
+                      onClick={() => setPrintingOrder(order)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs px-3.5 py-2 transition-all hover:scale-105"
+                      title="Imprimir Comprovante Térmico (58mm iGET)"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      <span>Imprimir (58mm)</span>
                     </button>
 
                     {/* WhatsApp Status Confirmation Button */}
@@ -912,6 +927,14 @@ export default function AdminOrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* THERMAL RECEIPT PRINT MODAL (58mm iGET) */}
+      {printingOrder && (
+        <ThermalPrintModal58mm
+          order={printingOrder}
+          onClose={() => setPrintingOrder(null)}
+        />
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 export interface DeliveryRange {
+  minKm?: number;
   maxKm: number;
   price: number;
 }
@@ -40,25 +41,21 @@ export function calculateHaversineDistance(
   return Math.round(distance * 10) / 10; // Round to 1 decimal place
 }
 
-// Fetch address from ViaCEP
-export async function lookupAddressByCep(cep: string) {
-  const cleanCep = cep.replace(/\D/g, '');
-  if (cleanCep.length !== 8) {
-    throw new Error('CEP inválido. Deve conter 8 dígitos.');
+export async function lookupAddressByCep(cepRaw: string) {
+  const cep = cepRaw.replace(/\D/g, '');
+  if (cep.length !== 8) {
+    throw new Error('CEP deve conter 8 dígitos.');
   }
 
-  const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-  if (!res.ok) {
-    throw new Error('Erro ao buscar CEP no servidor.');
-  }
-
+  const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
   const data = await res.json();
+
   if (data.erro) {
     throw new Error('CEP não encontrado.');
   }
 
   return {
-    cep: data.cep,
+    cep: cepRaw,
     street: data.logradouro || '',
     neighborhood: data.bairro || '',
     city: data.localidade || '',
@@ -66,7 +63,21 @@ export async function lookupAddressByCep(cep: string) {
   };
 }
 
-// Get realistic client coordinates (checks same CEP, real Geocoding, or fallback estimation)
+export function estimateCoordsFromCep(cleanClient: string, cleanStore: string, defaultLat: number, defaultLon: number) {
+  const clientNum = parseInt(cleanClient.substring(0, 5) || '0', 10);
+  const storeNum = parseInt(cleanStore.substring(0, 5) || '0', 10);
+  const diff = storeNum ? Math.abs(clientNum - storeNum) : 0;
+
+  const approxKm = Math.min(30, Math.max(0.5, diff * 0.05));
+  const approxDeg = approxKm / 111;
+
+  return {
+    lat: defaultLat + approxDeg,
+    lon: defaultLon + approxDeg,
+  };
+}
+
+// Fallback coordinate finder using ViaCEP & OpenStreetMap Nominatim
 export async function getCoordsForAddress({
   cep,
   street,
@@ -86,100 +97,34 @@ export async function getCoordsForAddress({
   storeLon: number;
   storeCep?: string;
 }): Promise<{ lat: number; lon: number }> {
-  const cleanClientCep = cep.replace(/\D/g, '');
-  const cleanStoreCep = storeCep ? storeCep.replace(/\D/g, '') : '';
+  const cleanCep = cep.replace(/\D/g, '');
 
-  // 1. Exact match CEP (same address or same store CEP): 0 km distance
-  if (cleanClientCep && cleanStoreCep && cleanClientCep === cleanStoreCep) {
-    return { lat: storeLat, lon: storeLon };
-  }
-
-  // 2. Real Geocoding lookup via Nominatim OpenStreetMap
-  if (street && city) {
-    try {
-      const query = encodeURIComponent(`${street}, ${neighborhood || ''}, ${city} - ${state || ''}, Brasil`);
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
-        {
-          headers: {
-            'User-Agent': 'HenriImports/1.0',
-          },
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0 && data[0].lat && data[0].lon) {
-          return {
-            lat: parseFloat(data[0].lat),
-            lon: parseFloat(data[0].lon),
-          };
-        }
+  // 1. Attempt geocoding via Nominatim
+  try {
+    const fullQuery = [street, neighborhood, city, state, 'Brasil'].filter(Boolean).join(', ');
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'HenriImportsApp/1.0' } }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon),
+        };
       }
-    } catch (err) {
-      console.warn('Nominatim geocoding fallback:', err);
     }
+  } catch (err) {
+    console.warn('Geocoding error, falling back to CEP distance:', err);
   }
 
-  // 3. Same CEP prefix (first 5 digits = same neighborhood / sub-district)
-  if (
-    cleanClientCep.length >= 5 &&
-    cleanStoreCep.length >= 5 &&
-    cleanClientCep.substring(0, 5) === cleanStoreCep.substring(0, 5)
-  ) {
-    return {
-      lat: storeLat + 0.001, // ~100 meters away
-      lon: storeLon + 0.001,
-    };
-  }
+  // 2. Fallback distance calculation using CEP prefix math
+  const defaultLat = storeLat || -23.5616;
+  const defaultLon = storeLon || -46.656;
 
-  // 4. Fallback estimation based on CEP difference from store CEP
-  const clientNum = parseInt(cleanClientCep.substring(0, 5) || '0', 10);
-  const storeNum = parseInt(cleanStoreCep.substring(0, 5) || '0', 10);
-  const diff = storeNum ? Math.abs(clientNum - storeNum) : 0;
-
-  const approxKm = Math.min(30, Math.max(0.5, diff * 0.05));
-  const approxDeg = approxKm / 111;
-
-  return {
-    lat: storeLat + approxDeg,
-    lon: storeLon + approxDeg,
-  };
-}
-
-// Synchronous estimation helper
-export function estimateCoordsFromCep(
-  cep: string,
-  defaultLat = -23.5616,
-  defaultLon = -46.656,
-  storeCep?: string
-): { lat: number; lon: number } {
-  const cleanClient = cep.replace(/\D/g, '');
-  const cleanStore = storeCep ? storeCep.replace(/\D/g, '') : '';
-
-  if (cleanClient && cleanStore && cleanClient === cleanStore) {
-    return { lat: defaultLat, lon: defaultLon };
-  }
-
-  if (
-    cleanClient.length >= 5 &&
-    cleanStore.length >= 5 &&
-    cleanClient.substring(0, 5) === cleanStore.substring(0, 5)
-  ) {
-    return { lat: defaultLat + 0.001, lon: defaultLon + 0.001 };
-  }
-
-  const clientNum = parseInt(cleanClient.substring(0, 5) || '0', 10);
-  const storeNum = parseInt(cleanStore.substring(0, 5) || '0', 10);
-  const diff = storeNum ? Math.abs(clientNum - storeNum) : 0;
-
-  const approxKm = Math.min(30, Math.max(0.5, diff * 0.05));
-  const approxDeg = approxKm / 111;
-
-  return {
-    lat: defaultLat + approxDeg,
-    lon: defaultLon + approxDeg,
-  };
+  const cleanStore = (storeCep || '01310100').replace(/\D/g, '');
+  return estimateCoordsFromCep(cleanCep, cleanStore, defaultLat, defaultLon);
 }
 
 export function calculateDeliveryFee({
@@ -204,20 +149,35 @@ export function calculateDeliveryFee({
   let deliveryFee = 0;
 
   if (mode === 'KM') {
-    deliveryFee = Math.max(5, distanceKm * kmRate);
+    deliveryFee = Math.max(5, distanceKm * (kmRate || 2.5));
   } else {
-    // Mode FAIXAS: find matching range
-    const sortedRanges = [...ranges].sort((a, b) => a.maxKm - b.maxKm);
-    const matchedRange = sortedRanges.find((r) => distanceKm <= r.maxKm);
+    // Mode FAIXAS: find matching range where minKm <= distanceKm <= maxKm
+    const sortedRanges = [...(ranges || [])].sort(
+      (a, b) => (Number(a.minKm) || 0) - (Number(b.minKm) || 0) || Number(a.maxKm) - Number(b.maxKm)
+    );
+
+    // Try finding exact range matching minKm and maxKm
+    const matchedRange = sortedRanges.find((r) => {
+      const min = Number(r.minKm) || 0;
+      const max = Number(r.maxKm) || 0;
+      return distanceKm >= min && distanceKm <= max;
+    });
 
     if (matchedRange) {
-      deliveryFee = matchedRange.price;
+      deliveryFee = Number(matchedRange.price) || 0;
     } else {
-      // Exceeds max range: highest range price + surplus km rate
-      const lastRange = sortedRanges[sortedRanges.length - 1];
-      const fallbackBase = lastRange ? lastRange.price : 25;
-      const extraKm = lastRange ? distanceKm - lastRange.maxKm : 0;
-      deliveryFee = fallbackBase + Math.max(0, extraKm * 3);
+      // Fallback if not directly matched:
+      if (sortedRanges.length > 0) {
+        const lastRange = sortedRanges[sortedRanges.length - 1];
+        if (distanceKm > lastRange.maxKm) {
+          const extraKm = distanceKm - lastRange.maxKm;
+          deliveryFee = Number(lastRange.price) + extraKm * (kmRate || 3);
+        } else {
+          deliveryFee = Number(sortedRanges[0].price);
+        }
+      } else {
+        deliveryFee = 10;
+      }
     }
   }
 

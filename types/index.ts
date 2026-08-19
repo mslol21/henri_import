@@ -16,7 +16,7 @@ export interface StoreConfigData {
   businessHours: string;
   deliveryMode: 'FAIXAS' | 'KM';
   deliveryKmRate: number;
-  deliveryRanges: { maxKm: number; price: number }[];
+  deliveryRanges: { minKm?: number; maxKm: number; price: number }[];
   pixKey?: string | null;
   pixName?: string | null;
   whatsappTemplate: string;

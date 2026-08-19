@@ -13,6 +13,8 @@ import {
   AlertCircle,
   Loader2,
   Search,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 import WholesaleShareModal from '@/components/admin/WholesaleShareModal';
@@ -347,25 +349,76 @@ export default function SettingsForm({ initialConfig }: { initialConfig: StoreCo
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="block text-xs font-bold text-slate-700">Faixas de Preço por Distância</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Faixas de Frete Editáveis (Por distância em KM)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = formData.deliveryRanges || [];
+                      const lastMax = current.length > 0 ? Number(current[current.length - 1].maxKm) || 0 : 0;
+                      handleChange('deliveryRanges', [
+                        ...current,
+                        { minKm: lastMax, maxKm: lastMax + 3, price: 10 },
+                      ]);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl px-3 py-1.5 transition-all"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Adicionar Nova Faixa</span>
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-slate-500">
+                  Defina o valor fixo cobrado por faixa de quilometragem. Exemplo: <strong>0km a 3km = R$ 5,00</strong> | <strong>3km a 6km = R$ 8,00</strong>.
+                </p>
+
+                <div className="space-y-2">
                   {(formData.deliveryRanges || []).map((range, idx) => (
-                    <div key={idx} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1">Até (km)</label>
-                        <input
-                          type="number"
-                          value={range.maxKm}
-                          onChange={(e) => {
-                            const newRanges = [...formData.deliveryRanges];
-                            newRanges[idx] = { ...newRanges[idx], maxKm: Number(e.target.value) };
-                            handleChange('deliveryRanges', newRanges);
-                          }}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-purple-600 focus:outline-none"
-                        />
+                    <div
+                      key={idx}
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200"
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="text-xs font-bold text-slate-500 w-16 shrink-0">Faixa {idx + 1}:</span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <div className="w-full">
+                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">De (km)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={range.minKm ?? (idx === 0 ? 0 : formData.deliveryRanges[idx - 1]?.maxKm || 0)}
+                              onChange={(e) => {
+                                const newRanges = [...formData.deliveryRanges];
+                                newRanges[idx] = { ...newRanges[idx], minKm: Number(e.target.value) };
+                                handleChange('deliveryRanges', newRanges);
+                              }}
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-purple-600 focus:outline-none"
+                            />
+                          </div>
+
+                          <span className="text-slate-400 font-bold mt-3">até</span>
+
+                          <div className="w-full">
+                            <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Até (km)</label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={range.maxKm}
+                              onChange={(e) => {
+                                const newRanges = [...formData.deliveryRanges];
+                                newRanges[idx] = { ...newRanges[idx], maxKm: Number(e.target.value) };
+                                handleChange('deliveryRanges', newRanges);
+                              }}
+                              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-purple-600 focus:outline-none"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 mb-1">Valor (R$)</label>
+
+                      <div className="w-full sm:w-44">
+                        <label className="block text-[10px] font-bold text-slate-500 mb-0.5">Valor Fixo (R$)</label>
                         <input
                           type="number"
                           step="0.5"
@@ -375,19 +428,24 @@ export default function SettingsForm({ initialConfig }: { initialConfig: StoreCo
                             newRanges[idx] = { ...newRanges[idx], price: Number(e.target.value) };
                             handleChange('deliveryRanges', newRanges);
                           }}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-purple-600 focus:outline-none"
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 focus:border-purple-600 focus:outline-none"
                         />
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newRanges = formData.deliveryRanges.filter((_, i) => i !== idx);
+                          handleChange('deliveryRanges', newRanges);
+                        }}
+                        className="p-2 text-slate-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition-colors self-end sm:self-center"
+                        title="Remover Faixa"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleChange('deliveryRanges', [...(formData.deliveryRanges || []), { maxKm: 20, price: 40 }])}
-                  className="text-xs font-bold text-purple-600 hover:text-purple-800 border border-purple-200 rounded-xl px-3 py-1.5 hover:bg-purple-50 transition-colors"
-                >
-                  + Adicionar Faixa
-                </button>
               </div>
             )}
           </div>
