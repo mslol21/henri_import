@@ -17,7 +17,7 @@ export interface DeliveryCalculationResult {
   };
 }
 
-// Haversine formula to calculate distance between two coordinates in km
+// Haversine formula to calculate straight-line distance between two coordinates in km
 export function calculateHaversineDistance(
   lat1: number,
   lon1: number,
@@ -38,7 +38,56 @@ export function calculateHaversineDistance(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
 
-  return Math.round(distance * 10) / 10; // Round to 1 decimal place
+  return Math.round(distance * 10) / 10;
+}
+
+// Calculate REAL DRIVING ROUTE distance (Google Maps / OSRM Routing Engine)
+export async function getDrivingRouteDistanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): Promise<number> {
+  const googleApiKey =
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  // 1. Attempt Google Maps Distance Matrix API if key is present
+  if (googleApiKey) {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat1},${lon1}&destinations=${lat2},${lon2}&mode=driving&language=pt-BR&key=${googleApiKey}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const element = data.rows?.[0]?.elements?.[0];
+        if (element?.status === 'OK' && element.distance?.value) {
+          const km = element.distance.value / 1000;
+          return Math.round(km * 10) / 10;
+        }
+      }
+    } catch (err) {
+      console.warn('Google Distance Matrix error, falling back to OSRM:', err);
+    }
+  }
+
+  // 2. OpenStreetMap OSRM Free Real Driving Route API (No key required)
+  try {
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+    const res = await fetch(osrmUrl, { headers: { 'User-Agent': 'HenriImports/1.0' } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.routes && data.routes.length > 0 && data.routes[0].distance) {
+        const km = data.routes[0].distance / 1000;
+        return Math.round(km * 10) / 10;
+      }
+    }
+  } catch (err) {
+    console.warn('OSRM Driving Route API error, falling back to urban road factor:', err);
+  }
+
+  // 3. Fallback: Straight line * 1.35 urban road detour factor (never raw straight line)
+  const haversine = calculateHaversineDistance(lat1, lon1, lat2, lon2);
+  return Math.round(haversine * 1.35 * 10) / 10;
 }
 
 export async function lookupAddressByCep(cepRaw: string) {
@@ -127,7 +176,8 @@ export async function getCoordsForAddress({
   return estimateCoordsFromCep(cleanCep, cleanStore, defaultLat, defaultLon);
 }
 
-export function calculateDeliveryFee({
+// ASYNC Real Driving Route Delivery Fee Calculation
+export async function calculateDeliveryFee({
   storeLat,
   storeLon,
   clientLat,
@@ -143,8 +193,9 @@ export function calculateDeliveryFee({
   mode: 'FAIXAS' | 'KM';
   kmRate: number;
   ranges: DeliveryRange[];
-}): { distanceKm: number; deliveryFee: number; estimatedTimeMin: number } {
-  const distanceKm = calculateHaversineDistance(storeLat, storeLon, clientLat, clientLon);
+}): Promise<{ distanceKm: number; deliveryFee: number; estimatedTimeMin: number }> {
+  // Real driving route distance in kilometers
+  const distanceKm = await getDrivingRouteDistanceKm(storeLat, storeLon, clientLat, clientLon);
 
   let deliveryFee = 0;
 
@@ -181,7 +232,7 @@ export function calculateDeliveryFee({
     }
   }
 
-  // Estimated delivery time: 20 minutes preparation + 3.5 mins per km
+  // Estimated delivery time: 20 minutes preparation + 3.5 mins per driving km
   const estimatedTimeMin = Math.round(20 + distanceKm * 3.5);
 
   return {

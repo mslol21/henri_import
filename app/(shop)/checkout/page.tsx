@@ -114,7 +114,7 @@ export default function CheckoutPage() {
         storeCep: config.cep,
       });
 
-      const feeResult = calculateDeliveryFee({
+      const feeResult = await calculateDeliveryFee({
         storeLat: config.latitude,
         storeLon: config.longitude,
         clientLat: clientCoords.lat,
