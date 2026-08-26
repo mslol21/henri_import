@@ -41,18 +41,37 @@ export function calculateHaversineDistance(
   return Math.round(distance * 10) / 10;
 }
 
-// Calculate REAL DRIVING ROUTE distance (Google Maps / OSRM Routing Engine)
+// Calculate REAL DRIVING ROUTE distance via OSRM (OpenStreetMap Routing Engine)
 export async function getDrivingRouteDistanceKm(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): Promise<number> {
+  // 1. Primary: OSRM (OpenStreetMap) Driving Route API
+  try {
+    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+    const res = await fetch(osrmUrl, {
+      headers: { 'User-Agent': 'HenriImportsApp/1.0' },
+      cache: 'no-store',
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.code === 'Ok' && data.routes && data.routes.length > 0 && data.routes[0].distance) {
+        const drivingKm = data.routes[0].distance / 1000;
+        return Math.round(drivingKm * 10) / 10;
+      }
+    }
+  } catch (err) {
+    console.warn('OSRM (OpenStreetMap) Routing API error, trying fallback:', err);
+  }
+
+  // 2. Backup: Google Maps Distance Matrix API if key is present
   const googleApiKey =
     process.env.GOOGLE_MAPS_API_KEY ||
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  // 1. Attempt Google Maps Distance Matrix API if key is present
   if (googleApiKey) {
     try {
       const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat1},${lon1}&destinations=${lat2},${lon2}&mode=driving&language=pt-BR&key=${googleApiKey}`;
@@ -66,26 +85,11 @@ export async function getDrivingRouteDistanceKm(
         }
       }
     } catch (err) {
-      console.warn('Google Distance Matrix error, falling back to OSRM:', err);
+      console.warn('Google Distance Matrix error:', err);
     }
   }
 
-  // 2. OpenStreetMap OSRM Free Real Driving Route API (No key required)
-  try {
-    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
-    const res = await fetch(osrmUrl, { headers: { 'User-Agent': 'HenriImports/1.0' } });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.routes && data.routes.length > 0 && data.routes[0].distance) {
-        const km = data.routes[0].distance / 1000;
-        return Math.round(km * 10) / 10;
-      }
-    }
-  } catch (err) {
-    console.warn('OSRM Driving Route API error, falling back to urban road factor:', err);
-  }
-
-  // 3. Fallback: Straight line * 1.35 urban road detour factor (never raw straight line)
+  // 3. Fallback: Straight line * 1.35 urban road detour factor
   const haversine = calculateHaversineDistance(lat1, lon1, lat2, lon2);
   return Math.round(haversine * 1.35 * 10) / 10;
 }
@@ -148,7 +152,7 @@ export async function getCoordsForAddress({
 }): Promise<{ lat: number; lon: number }> {
   const cleanCep = cep.replace(/\D/g, '');
 
-  // 1. Attempt geocoding via Nominatim
+  // 1. Attempt geocoding via OpenStreetMap Nominatim
   try {
     const fullQuery = [street, neighborhood, city, state, 'Brasil'].filter(Boolean).join(', ');
     const res = await fetch(
@@ -176,7 +180,7 @@ export async function getCoordsForAddress({
   return estimateCoordsFromCep(cleanCep, cleanStore, defaultLat, defaultLon);
 }
 
-// ASYNC Real Driving Route Delivery Fee Calculation
+// ASYNC Real OSRM Driving Route Delivery Fee Calculation
 export async function calculateDeliveryFee({
   storeLat,
   storeLon,
@@ -194,7 +198,7 @@ export async function calculateDeliveryFee({
   kmRate: number;
   ranges: DeliveryRange[];
 }): Promise<{ distanceKm: number; deliveryFee: number; estimatedTimeMin: number }> {
-  // Real driving route distance in kilometers
+  // Real OSRM driving route distance in kilometers
   const distanceKm = await getDrivingRouteDistanceKm(storeLat, storeLon, clientLat, clientLon);
 
   let deliveryFee = 0;
