@@ -22,10 +22,10 @@ const defaultConfig: StoreConfigData = {
   deliveryMode: 'FAIXAS',
   deliveryKmRate: 2.5,
   deliveryRanges: [
-    { maxKm: 3, price: 10.0 },
-    { maxKm: 5, price: 15.0 },
-    { maxKm: 8, price: 20.0 },
-    { maxKm: 15, price: 30.0 },
+    { minKm: 0, maxKm: 3, price: 5.0 },
+    { minKm: 3, maxKm: 6, price: 8.0 },
+    { minKm: 6, maxKm: 10, price: 12.0 },
+    { minKm: 10, maxKm: 15, price: 18.0 },
   ],
   pixKey: '11999999999',
   pixName: 'Henri Imports LTDA',
@@ -35,21 +35,38 @@ const defaultConfig: StoreConfigData = {
 interface ConfigContextType {
   config: StoreConfigData;
   updateConfig: (newConfig: Partial<StoreConfigData>) => void;
+  refreshConfig: () => Promise<void>;
 }
 
 const ConfigContext = createContext<ConfigContextType>({
   config: defaultConfig,
   updateConfig: () => {},
+  refreshConfig: async () => {},
 });
 
 export function ConfigProvider({ children, initialConfig }: { children: React.ReactNode; initialConfig?: StoreConfigData | null }) {
   const [config, setConfig] = useState<StoreConfigData>(initialConfig || defaultConfig);
 
+  const refreshConfig = async () => {
+    try {
+      const res = await fetch('/api/settings', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.deliveryRanges) {
+          setConfig((prev) => ({ ...prev, ...data }));
+        }
+      }
+    } catch (err) {
+      console.warn('Error refreshing live store settings:', err);
+    }
+  };
+
+  useEffect(() => {
+    refreshConfig();
+  }, []);
+
   const updateConfig = (newConfig: Partial<StoreConfigData>) => {
-    setConfig((prev) => {
-      const updated = { ...prev, ...newConfig };
-      return updated;
-    });
+    setConfig((prev) => ({ ...prev, ...newConfig }));
   };
 
   useEffect(() => {
@@ -60,7 +77,7 @@ export function ConfigProvider({ children, initialConfig }: { children: React.Re
   }, [config]);
 
   return (
-    <ConfigContext.Provider value={{ config, updateConfig }}>
+    <ConfigContext.Provider value={{ config, updateConfig, refreshConfig }}>
       {children}
     </ConfigContext.Provider>
   );

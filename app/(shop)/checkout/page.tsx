@@ -102,26 +102,40 @@ export default function CheckoutPage() {
       setValue('city', addr.city);
       setValue('state', addr.state);
 
-      // 2. Calculate real client coordinates & distance relative to store CEP
+      // 2. Fetch latest store settings to ensure real-time freight rates
+      let liveConfig = config;
+      try {
+        const settingsRes = await fetch('/api/settings', { cache: 'no-store' });
+        if (settingsRes.ok) {
+          const freshData = await settingsRes.json();
+          if (freshData && freshData.deliveryRanges) {
+            liveConfig = freshData;
+          }
+        }
+      } catch (e) {
+        // Fall back to current context config if fetch fails
+      }
+
+      // 3. Calculate real client coordinates & distance relative to store CEP
       const clientCoords = await getCoordsForAddress({
         cep,
         street: addr.street,
         neighborhood: addr.neighborhood,
         city: addr.city,
         state: addr.state,
-        storeLat: config.latitude,
-        storeLon: config.longitude,
-        storeCep: config.cep,
+        storeLat: liveConfig.latitude,
+        storeLon: liveConfig.longitude,
+        storeCep: liveConfig.cep,
       });
 
       const feeResult = await calculateDeliveryFee({
-        storeLat: config.latitude,
-        storeLon: config.longitude,
+        storeLat: liveConfig.latitude,
+        storeLon: liveConfig.longitude,
         clientLat: clientCoords.lat,
         clientLon: clientCoords.lon,
-        mode: config.deliveryMode,
-        kmRate: config.deliveryKmRate,
-        ranges: config.deliveryRanges,
+        mode: liveConfig.deliveryMode,
+        kmRate: liveConfig.deliveryKmRate,
+        ranges: liveConfig.deliveryRanges,
       });
 
       setDeliveryInfo(feeResult);
