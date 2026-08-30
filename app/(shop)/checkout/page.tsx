@@ -155,6 +155,47 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
+      let currentDeliveryFee = deliveryFee;
+      let currentDistanceKm = deliveryInfo?.distanceKm;
+
+      // 0. Ensure delivery fee is calculated if user submitted without CEP blur
+      if (!freeShippingGranted && (!deliveryInfo || currentDeliveryFee === 0) && formData.cep) {
+        try {
+          const settingsRes = await fetch('/api/settings', { cache: 'no-store' });
+          const liveConfig = settingsRes.ok ? await settingsRes.json() : config;
+          
+          const coords = await getCoordsForAddress({
+            cep: formData.cep.trim(),
+            street: formData.street,
+            neighborhood: formData.neighborhood,
+            city: formData.city,
+            state: formData.state,
+            storeLat: liveConfig.latitude,
+            storeLon: liveConfig.longitude,
+            storeCep: liveConfig.cep,
+          });
+
+          const feeRes = await calculateDeliveryFee({
+            storeLat: liveConfig.latitude,
+            storeLon: liveConfig.longitude,
+            clientLat: coords.lat,
+            clientLon: coords.lon,
+            mode: liveConfig.deliveryMode,
+            kmRate: liveConfig.deliveryKmRate,
+            ranges: liveConfig.deliveryRanges,
+          });
+
+          if (feeRes && feeRes.deliveryFee > 0) {
+            currentDeliveryFee = feeRes.deliveryFee;
+            currentDistanceKm = feeRes.distanceKm;
+          }
+        } catch (calcErr) {
+          console.warn('OnSubmit delivery fee calculation fallback error:', calcErr);
+        }
+      }
+
+      const currentGrandTotal = Math.max(0, subtotal + currentDeliveryFee);
+
       const addressText = `${formData.street}, Nº ${formData.number} ${
         formData.complement ? `- ${formData.complement}` : ''
       }, Bairro ${formData.neighborhood}, ${formData.city}/${formData.state} - CEP ${formData.cep}`;
@@ -172,9 +213,9 @@ export default function CheckoutPage() {
         formData,
         orderItems,
         subtotal,
-        deliveryFee,
-        grandTotal,
-        deliveryInfo?.distanceKm
+        currentDeliveryFee,
+        currentGrandTotal,
+        currentDistanceKm
       );
 
       if (!result.success) {
@@ -182,6 +223,9 @@ export default function CheckoutPage() {
         setIsSubmitting(false);
         return;
       }
+
+      const finalFee = result.deliveryFee !== undefined ? result.deliveryFee : currentDeliveryFee;
+      const finalTotal = result.total !== undefined ? result.total : currentGrandTotal;
 
       // 3. Build WhatsApp payload & message
       const whatsappPayload: OrderWhatsAppPayload = {
@@ -196,10 +240,10 @@ export default function CheckoutPage() {
           price: i.unitPrice,
         })),
         notes: formData.notes,
-        distanceKm: deliveryInfo?.distanceKm,
-        deliveryFee,
+        distanceKm: currentDistanceKm,
+        deliveryFee: finalFee,
         subtotal,
-        total: grandTotal,
+        total: finalTotal,
         paymentMethod: formData.paymentMethod,
         storePhone: config.whatsapp,
       };
@@ -214,7 +258,7 @@ export default function CheckoutPage() {
 
       // Redirect user to success screen
       router.push(
-        `/order-success?orderNumber=${result.orderNumber || '1001'}&total=${grandTotal}`
+        `/order-success?orderNumber=${result.orderNumber || '1001'}&total=${finalTotal}`
       );
     } catch (err) {
       console.error('Error completing checkout:', err);

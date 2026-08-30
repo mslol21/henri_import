@@ -16,7 +16,7 @@ export async function createOrder(
   deliveryFee: number,
   total: number,
   distanceKm?: number
-): Promise<{ success: boolean; orderId?: string; orderNumber?: number; error?: string }> {
+): Promise<{ success: boolean; orderId?: string; orderNumber?: number; deliveryFee?: number; total?: number; error?: string }> {
   try {
     const cleanPhone = data.phone.trim();
 
@@ -40,7 +40,50 @@ export async function createOrder(
       });
     }
 
-    // 2. Create address record
+    // 2. Recalculate delivery fee server-side if 0 and CEP is provided
+    let finalSubtotal = Number(subtotal) || 0;
+    let finalDeliveryFee = Number(deliveryFee) || 0;
+    let finalDistanceKm = distanceKm && !isNaN(distanceKm) ? Number(distanceKm) : null;
+
+    if (finalDeliveryFee === 0 && data.cep) {
+      try {
+        const storeConfig = await db.storeConfig.findUnique({ where: { id: 'default' } });
+        if (storeConfig) {
+          const { getCoordsForAddress, calculateDeliveryFee } = await import('@/services/distance');
+          const coords = await getCoordsForAddress({
+            cep: data.cep.trim(),
+            street: data.street.trim(),
+            neighborhood: data.neighborhood.trim(),
+            city: data.city.trim(),
+            state: data.state.trim(),
+            storeLat: storeConfig.latitude,
+            storeLon: storeConfig.longitude,
+            storeCep: storeConfig.cep,
+          });
+
+          const feeResult = await calculateDeliveryFee({
+            storeLat: storeConfig.latitude,
+            storeLon: storeConfig.longitude,
+            clientLat: coords.lat,
+            clientLon: coords.lon,
+            mode: storeConfig.deliveryMode as any,
+            kmRate: storeConfig.deliveryKmRate,
+            ranges: (storeConfig.deliveryRanges as any) || [],
+          });
+
+          if (feeResult && feeResult.deliveryFee > 0) {
+            finalDeliveryFee = feeResult.deliveryFee;
+            finalDistanceKm = feeResult.distanceKm;
+          }
+        }
+      } catch (calcErr) {
+        console.warn('Server-side delivery fee calculation fallback error:', calcErr);
+      }
+    }
+
+    const finalTotal = finalSubtotal + finalDeliveryFee;
+
+    // 3. Create address record
     const address = await db.address.create({
       data: {
         clientId: client.id,
@@ -51,11 +94,11 @@ export async function createOrder(
         neighborhood: data.neighborhood.trim(),
         city: data.city.trim(),
         state: data.state.trim(),
-        distanceKm: distanceKm && !isNaN(distanceKm) ? Number(distanceKm) : null,
+        distanceKm: finalDistanceKm,
       },
     });
 
-    // 3. Verify cart items exist in DB to prevent Foreign Key errors
+    // 4. Verify cart items exist in DB to prevent Foreign Key errors
     const validItems: Array<{
       productId: string;
       flavorId: string | null;
@@ -97,14 +140,14 @@ export async function createOrder(
       return { success: false, error: 'Nenhum produto válido no carrinho.' };
     }
 
-    // 4. Create Order in Database
+    // 5. Create Order in Database
     const order = await db.order.create({
       data: {
         clientId: client.id,
         addressId: address.id,
-        subtotal: Number(subtotal) || 0,
-        deliveryFee: Number(deliveryFee) || 0,
-        total: Number(total) || 0,
+        subtotal: finalSubtotal,
+        deliveryFee: finalDeliveryFee,
+        total: finalTotal,
         paymentMethod: data.paymentMethod,
         notes: data.notes ? data.notes.trim() : null,
         status: 'NEW',
@@ -125,7 +168,7 @@ export async function createOrder(
       },
     });
 
-    // 5. Safely decrement stock (non-blocking if stock fail)
+    // 6. Safely decrement stock (non-blocking if stock fail)
     for (const item of validItems) {
       try {
         if (item.flavorId) {
@@ -148,6 +191,8 @@ export async function createOrder(
       success: true,
       orderId: order.id,
       orderNumber: order.number,
+      deliveryFee: order.deliveryFee,
+      total: order.total,
     };
   } catch (err: any) {
     console.error('CRITICAL ERROR creating order in DB:', err);
