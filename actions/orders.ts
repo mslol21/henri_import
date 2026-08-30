@@ -237,16 +237,27 @@ export async function getOrders(statusFilter?: string) {
         phone: o.client.phone,
         email: o.client.email,
       },
-      address: {
-        cep: o.address.cep,
-        street: o.address.street,
-        number: o.address.number,
-        complement: o.address.complement,
-        neighborhood: o.address.neighborhood,
-        city: o.address.city,
-        state: o.address.state,
-        distanceKm: o.address.distanceKm,
-      },
+      address: o.address
+        ? {
+            cep: o.address.cep || '',
+            street: o.address.street || '',
+            number: o.address.number || '',
+            complement: o.address.complement || null,
+            neighborhood: o.address.neighborhood || '',
+            city: o.address.city || '',
+            state: o.address.state || '',
+            distanceKm: o.address.distanceKm || null,
+          }
+        : {
+            cep: '',
+            street: 'Endereço não informado',
+            number: 'S/N',
+            complement: null,
+            neighborhood: '',
+            city: '',
+            state: '',
+            distanceKm: null,
+          },
       items: o.items.map((i) => ({
         id: i.id,
         productId: i.productId,

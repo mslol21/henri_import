@@ -88,9 +88,14 @@ const getWhatsAppMessageForStatus = (order: OrderUI, status: OrderStatusType) =>
           .join('\n')
       : 'Nenhum item especificado';
 
-  const addressText = `${order.address.street}, Nº ${order.address.number}${
-    order.address.complement ? ` - ${order.address.complement}` : ''
-  }, ${order.address.neighborhood}, ${order.address.city}/${order.address.state} - CEP ${order.address.cep}`;
+  const addressText =
+    order.address && (order.address.street || order.address.cep)
+      ? `${order.address.street}, Nº ${order.address.number}${
+          order.address.complement ? ` - ${order.address.complement}` : ''
+        }${order.address.neighborhood ? `, Bairro ${order.address.neighborhood}` : ''}${
+          order.address.city ? `, ${order.address.city}/${order.address.state}` : ''
+        }${order.address.cep ? ` - CEP ${order.address.cep}` : ''}`
+      : 'Endereço não cadastrado';
 
   const statusLabels: Record<OrderStatusType, string> = {
     NEW: 'Novo Pedido (Aguardando Aprovação)',
@@ -575,10 +580,16 @@ export default function AdminOrdersPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-700">
                   <div className="space-y-1">
                     <span className="font-bold text-slate-900 block">Endereço de Entrega:</span>
-                    <p>{order.address.street}, Nº {order.address.number} {order.address.complement ? `- ${order.address.complement}` : ''}</p>
-                    <p>{order.address.neighborhood}, {order.address.city}/{order.address.state} - CEP {order.address.cep}</p>
-                    {order.address.distanceKm && (
-                      <p className="text-purple-600 font-bold">Distância da loja: ~{order.address.distanceKm} km</p>
+                    {order.address && (order.address.street || order.address.cep) ? (
+                      <>
+                        <p>{order.address.street}, Nº {order.address.number} {order.address.complement ? `- ${order.address.complement}` : ''}</p>
+                        <p>{order.address.neighborhood ? `${order.address.neighborhood}, ` : ''}{order.address.city}/{order.address.state} - CEP {order.address.cep}</p>
+                        {order.address.distanceKm && (
+                          <p className="text-purple-600 font-bold">Distância da loja: ~{order.address.distanceKm} km</p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-slate-400 italic">Endereço não cadastrado / Retirada</p>
                     )}
                   </div>
 
