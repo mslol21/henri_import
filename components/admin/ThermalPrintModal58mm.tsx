@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Printer, X, Copy, Check, Bluetooth, Share2 } from 'lucide-react';
+import { Printer, X, Copy, Check, Bluetooth } from 'lucide-react';
 
 interface OrderItemUI {
   id: string;
@@ -36,6 +36,22 @@ interface OrderUI {
   createdAt: string;
 }
 
+const PAYMENT_LABELS: Record<string, string> = {
+  PIX: 'PIX',
+  CASH: 'Dinheiro',
+  CARD_ON_DELIVERY: 'Cartão na Entrega',
+  CARD: 'Cartão de Crédito/Débito',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  NEW: 'Novo (Pendente)',
+  CONFIRMED: 'Aprovado',
+  PREPARING: 'Em Separação',
+  SHIPPED: 'Saiu para Entrega',
+  DELIVERED: 'Entregue',
+  CANCELLED: 'Cancelado',
+};
+
 export default function ThermalPrintModal58mm({
   order,
   storeName = 'HENRI IMPORTS TABACARIA & VAPES',
@@ -48,54 +64,160 @@ export default function ThermalPrintModal58mm({
   const [copied, setCopied] = useState(false);
   const [btStatus, setBtStatus] = useState<string | null>(null);
 
-  // Format plain text representation for ESC/POS / Bluetooth printing apps
+  const cleanCurrency = (val: number) => {
+    return formatCurrency(val).replace(/\u00a0/g, ' ');
+  };
+
+  // Generate 32-column formatted plain text receipt for 58mm thermal paper
   const generatePlainTextReceipt = () => {
-    const divider = '--------------------------------';
-    const doubleDivider = '================================';
+    const width = 32;
+    const divider = '-'.repeat(width);
+    const doubleDivider = '='.repeat(width);
     const dateStr = formatDate(order.createdAt);
+    const statusText = STATUS_LABELS[order.status] || order.status;
+    const paymentText = PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod;
 
-    let itemsList = '';
-    order.items.forEach((item) => {
-      itemsList += `${item.quantity}x ${item.productName.toUpperCase()}\n`;
-      if (item.flavorName) {
-        itemsList += `   SABOR: ${item.flavorName.toUpperCase()}\n`;
+    const padCenter = (str: string) => {
+      const len = str.length;
+      if (len >= width) return str.substring(0, width);
+      const left = Math.floor((width - len) / 2);
+      return ' '.repeat(left) + str;
+    };
+
+    const formatLine = (left: string, right: string) => {
+      const spaceNeeded = width - left.length - right.length;
+      if (spaceNeeded > 0) {
+        return left + ' '.repeat(spaceNeeded) + right;
       }
-      itemsList += `   VALOR: ${formatCurrency(item.price * item.quantity)}\n`;
+      return left + ' ' + right;
+    };
+
+    let lines: string[] = [];
+
+    // Header
+    lines.push(doubleDivider);
+    lines.push(padCenter(storeName.toUpperCase()));
+    lines.push(doubleDivider);
+
+    // Order Info
+    lines.push(`PEDIDO: #${order.number}`);
+    lines.push(`DATA: ${dateStr}`);
+    lines.push(`STATUS: ${statusText.toUpperCase()}`);
+    lines.push(divider);
+
+    // Client Info
+    lines.push(`CLIENTE: ${order.client.name.toUpperCase()}`);
+    lines.push(`FONE: ${order.client.phone}`);
+    lines.push(divider);
+
+    // Address Info
+    lines.push('ENDERECO DE ENTREGA:');
+    lines.push(`${order.address.street.toUpperCase()}, N ${order.address.number}`);
+    if (order.address.complement) {
+      lines.push(`COMPL: ${order.address.complement.toUpperCase()}`);
+    }
+    lines.push(`BAIRRO: ${order.address.neighborhood.toUpperCase()}`);
+    lines.push(`CIDADE: ${order.address.city.toUpperCase()}/${order.address.state.toUpperCase()}`);
+    lines.push(`CEP: ${order.address.cep}`);
+    if (order.address.distanceKm) {
+      lines.push(`DISTANCIA: ~${order.address.distanceKm} KM`);
+    }
+    lines.push(divider);
+
+    // Items List
+    lines.push('ITENS SOLICITADOS:');
+    order.items.forEach((item) => {
+      const priceStr = cleanCurrency(item.price * item.quantity);
+      const itemTitle = `${item.quantity}x ${item.productName.toUpperCase()}`;
+      
+      // If item title + price exceeds 32 chars, break onto 2 lines cleanly
+      if (itemTitle.length + priceStr.length + 1 > width) {
+        lines.push(itemTitle);
+        lines.push(formatLine('', priceStr));
+      } else {
+        lines.push(formatLine(itemTitle, priceStr));
+      }
+
+      if (item.flavorName) {
+        lines.push(`   SABOR: ${item.flavorName.toUpperCase()}`);
+      }
     });
+    lines.push(divider);
 
-    const addrStr = `${order.address.street}, ${order.address.number}${
-      order.address.complement ? ` - ${order.address.complement}` : ''
-    }\n${order.address.neighborhood} - ${order.address.city}/${order.address.state}\nCEP: ${order.address.cep}`;
+    // Totals
+    lines.push(formatLine('SUBTOTAL:', cleanCurrency(order.subtotal)));
+    lines.push(formatLine('TAXA FRETE:', cleanCurrency(order.deliveryFee)));
+    lines.push(formatLine('TOTAL GERAL:', cleanCurrency(order.total)));
+    lines.push(divider);
 
-    return `${doubleDivider}
-    ${storeName.toUpperCase()}
-${doubleDivider}
-PEDIDO: #${order.number}
-DATA: ${dateStr}
-STATUS: ${order.status}
-${divider}
-CLIENTE: ${order.client.name.toUpperCase()}
-FONE: ${order.client.phone}
-${divider}
-ENDERECO DE ENTREGA:
-${addrStr}
-${order.address.distanceKm ? `DISTANCIA: ~${order.address.distanceKm} KM\n` : ''}${divider}
-ITENS SOLICITADOS:
-${itemsList}${divider}
-SUBTOTAL:             ${formatCurrency(order.subtotal)}
-TAXA DE FRETE:        ${formatCurrency(order.deliveryFee)}
-TOTAL GERAL:          ${formatCurrency(order.total)}
-${divider}
-FORMA DE PAGAMENTO:   ${order.paymentMethod.toUpperCase()}
-${order.notes ? `OBS: ${order.notes.toUpperCase()}\n` : ''}${doubleDivider}
-  OBRIGADO PELA PREFERENCIA!
-${doubleDivider}
+    // Payment & Notes
+    lines.push(`PAGAMENTO: ${paymentText.toUpperCase()}`);
+    if (order.notes) {
+      lines.push(`OBS: ${order.notes.toUpperCase()}`);
+    }
+    lines.push(doubleDivider);
+    lines.push(padCenter('OBRIGADO PELA PREFERENCIA!'));
+    lines.push(doubleDivider);
+    lines.push('\n\n');
 
-`;
+    return lines.join('\n');
   };
 
   const handleNativePrint = () => {
-    window.print();
+    const textReceipt = generatePlainTextReceipt();
+    
+    // Create an isolated printable iframe to avoid page clipping or CSS hide issues
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Imprimir Pedido #${order.number}</title>
+          <style>
+            @page {
+              size: 58mm auto;
+              margin: 0;
+            }
+            body {
+              font-family: 'Courier New', Courier, monospace;
+              font-size: 10pt;
+              font-weight: bold;
+              color: #000;
+              width: 58mm;
+              margin: 0;
+              padding: 2mm;
+              white-space: pre-wrap;
+              word-break: break-word;
+            }
+          </style>
+        </head>
+        <body>${textReceipt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 250);
   };
 
   const handleCopyText = () => {
@@ -142,8 +264,9 @@ ${doubleDivider}
       }
 
       setBtStatus('Enviando dados de impressão...');
+      const text = generatePlainTextReceipt();
       const encoder = new TextEncoder();
-      const data = encoder.encode(generatePlainTextReceipt());
+      const data = encoder.encode(text);
 
       // Send in 512 byte chunks
       const chunkSize = 512;
@@ -161,12 +284,16 @@ ${doubleDivider}
     }
   };
 
+  const plainTextDisplay = generatePlainTextReceipt();
+  const paymentLabel = PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod;
+  const statusLabel = STATUS_LABELS[order.status] || order.status;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs overflow-y-auto print:p-0 print:bg-white">
-      {/* Modal Box — hidden during native printing except receipt container */}
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 space-y-6 my-8 print:shadow-none print:p-0 print:my-0 print:w-full">
-        {/* Header (Screen only) */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 print:hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs overflow-y-auto print:hidden">
+      {/* Modal Box */}
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 space-y-6 my-8">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <Printer className="h-5 w-5 text-purple-600" />
             <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
@@ -181,12 +308,12 @@ ${doubleDivider}
           </button>
         </div>
 
-        {/* Action Buttons (Screen only) */}
-        <div className="space-y-2 print:hidden">
+        {/* Action Buttons */}
+        <div className="space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               onClick={handleNativePrint}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs px-4 py-3 shadow-lg transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs px-4 py-3 shadow-lg transition-all hover:scale-[1.02]"
             >
               <Printer className="h-4 w-4" />
               <span>Imprimir (58mm)</span>
@@ -216,106 +343,9 @@ ${doubleDivider}
           )}
         </div>
 
-        {/* 58mm THERMAL RECEIPT VISUAL CONTAINER */}
-        <div className="thermal-receipt-container font-mono text-[11px] leading-tight text-black bg-white p-4 border border-slate-300 rounded-2xl shadow-inner mx-auto max-w-[260px] print:max-w-none print:w-[58mm] print:p-0 print:border-none print:shadow-none">
-          {/* Custom Print CSS specifically targeting 58mm thermal roll paper */}
-          <style jsx global>{`
-            @media print {
-              body * {
-                visibility: hidden;
-              }
-              .thermal-receipt-container,
-              .thermal-receipt-container * {
-                visibility: visible;
-              }
-              .thermal-receipt-container {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 58mm !important;
-                max-width: 58mm !important;
-                margin: 0 !important;
-                padding: 2mm !important;
-                border: none !important;
-                font-family: 'Courier New', Courier, monospace !important;
-                font-size: 10pt !important;
-                color: #000 !important;
-              }
-              @page {
-                size: 58mm auto;
-                margin: 0;
-              }
-            }
-          `}</style>
-
-          <div className="text-center font-bold text-xs uppercase mb-1">
-            ================================<br />
-            {storeName}<br />
-            ================================
-          </div>
-
-          <div className="my-1.5">
-            <strong>PEDIDO:</strong> #{order.number}<br />
-            <strong>DATA:</strong> {formatDate(order.createdAt)}<br />
-            <strong>STATUS:</strong> {order.status}
-          </div>
-
-          <div className="my-1.5 border-t border-dashed border-black pt-1">
-            <strong>CLIENTE:</strong> {order.client.name.toUpperCase()}<br />
-            <strong>FONE:</strong> {order.client.phone}
-          </div>
-
-          <div className="my-1.5 border-t border-dashed border-black pt-1">
-            <strong>ENDEREÇO DE ENTREGA:</strong><br />
-            {order.address.street}, Nº {order.address.number}
-            {order.address.complement ? ` - ${order.address.complement}` : ''}<br />
-            {order.address.neighborhood} - {order.address.city}/{order.address.state}<br />
-            CEP: {order.address.cep}<br />
-            {order.address.distanceKm && <span>DISTÂNCIA: ~{order.address.distanceKm} KM</span>}
-          </div>
-
-          <div className="my-1.5 border-t border-dashed border-black pt-1">
-            <strong>ITENS SOLICITADOS:</strong>
-            <div className="space-y-1 mt-1">
-              {order.items.map((item, idx) => (
-                <div key={idx} className="flex flex-col">
-                  <div className="flex justify-between font-bold">
-                    <span>{item.quantity}x {item.productName.toUpperCase()}</span>
-                    <span>{formatCurrency(item.price * item.quantity)}</span>
-                  </div>
-                  {item.flavorName && (
-                    <span className="pl-3 text-[10px] text-slate-700">SABOR: {item.flavorName.toUpperCase()}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="my-1.5 border-t border-dashed border-black pt-1 space-y-0.5">
-            <div className="flex justify-between">
-              <span>SUBTOTAL:</span>
-              <span>{formatCurrency(order.subtotal)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>TAXA FRETE:</span>
-              <span>{formatCurrency(order.deliveryFee)}</span>
-            </div>
-            <div className="flex justify-between font-extrabold text-xs border-t border-black pt-1 mt-1">
-              <span>TOTAL GERAL:</span>
-              <span>{formatCurrency(order.total)}</span>
-            </div>
-          </div>
-
-          <div className="my-1.5 border-t border-dashed border-black pt-1">
-            <strong>PAGAMENTO:</strong> {order.paymentMethod.toUpperCase()}<br />
-            {order.notes && <span><strong>OBS:</strong> {order.notes.toUpperCase()}</span>}
-          </div>
-
-          <div className="text-center font-bold text-[10px] uppercase mt-3 pt-1 border-t border-dashed border-black">
-            ================================<br />
-            OBRIGADO PELA PREFERÊNCIA!<br />
-            ================================
-          </div>
+        {/* 58mm RECEIPT DISPLAY CONTAINER */}
+        <div className="font-mono text-[11px] leading-tight text-black bg-white p-4 border border-slate-300 rounded-2xl shadow-inner mx-auto max-w-[260px] whitespace-pre-wrap word-break-break-word select-all">
+          {plainTextDisplay}
         </div>
       </div>
     </div>
