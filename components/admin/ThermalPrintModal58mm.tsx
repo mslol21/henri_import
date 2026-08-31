@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Printer, X, Copy, Check, Bluetooth, Smartphone, Info } from 'lucide-react';
+import { Printer, X, Copy, Check, Bluetooth, ExternalLink, Info } from 'lucide-react';
 
 interface OrderItemUI {
   id: string;
@@ -123,32 +123,35 @@ export default function ThermalPrintModal58mm({
     }
     lines.push(divider);
 
-    // Address Info - Safe optional chaining to guarantee delivery address prints
+    // Address Info - Fail-safe extraction guaranteed for iOS and Chrome
     lines.push('ENDERECO DE ENTREGA:');
     const addr = order?.address;
-    if (addr && (addr.street || addr.cep)) {
-      const street = addr.street ? addr.street.toUpperCase() : 'ENDERECO NAO INFORMADO';
-      const num = addr.number ? `N ${addr.number}` : 'S/N';
-      lines.push(`${street}, ${num}`);
-      if (addr.complement) {
-        lines.push(`COMPL: ${addr.complement.toUpperCase()}`);
+    const streetText = addr?.street && addr.street.trim() !== '' ? addr.street.trim().toUpperCase() : null;
+    const cepText = addr?.cep && addr.cep.trim() !== '' ? addr.cep.trim() : null;
+    const neighText = addr?.neighborhood && addr.neighborhood.trim() !== '' ? addr.neighborhood.trim().toUpperCase() : null;
+    const cityText = addr?.city && addr.city.trim() !== '' ? addr.city.trim().toUpperCase() : null;
+    const stateText = addr?.state && addr.state.trim() !== '' ? addr.state.trim().toUpperCase() : null;
+
+    if (streetText || cepText || neighText || cityText) {
+      const numText = addr?.number && addr.number.trim() !== '' ? `N ${addr.number.trim()}` : 'S/N';
+      lines.push(`${streetText || 'ENDERECO NAO ESPECIFICADO'}, ${numText}`);
+      if (addr?.complement && addr.complement.trim() !== '') {
+        lines.push(`COMPL: ${addr.complement.trim().toUpperCase()}`);
       }
-      if (addr.neighborhood) {
-        lines.push(`BAIRRO: ${addr.neighborhood.toUpperCase()}`);
+      if (neighText) {
+        lines.push(`BAIRRO: ${neighText}`);
       }
-      const city = addr.city ? addr.city.toUpperCase() : '';
-      const state = addr.state ? addr.state.toUpperCase() : '';
-      if (city || state) {
-        lines.push(`CIDADE: ${city}${state ? '/' + state : ''}`);
+      if (cityText || stateText) {
+        lines.push(`CIDADE: ${cityText || ''}${stateText ? '/' + stateText : ''}`);
       }
-      if (addr.cep) {
-        lines.push(`CEP: ${addr.cep}`);
+      if (cepText) {
+        lines.push(`CEP: ${cepText}`);
       }
-      if (addr.distanceKm) {
+      if (addr?.distanceKm) {
         lines.push(`DISTANCIA: ~${addr.distanceKm} KM`);
       }
     } else {
-      lines.push('ENDERECO NAO CADASTRADO / RETIRADA');
+      lines.push('RETIRADA NA LOJA / ENTREGA A COMBINAR');
     }
     lines.push(divider);
 
@@ -195,106 +198,58 @@ export default function ThermalPrintModal58mm({
     return lines.join('\n');
   };
 
-  const handleNativePrint = () => {
+  const openDedicatedPrintWindow = () => {
     const textReceipt = generatePlainTextReceipt();
-    
-    // Check if device is iOS
-    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || '');
-
-    if (isIOS) {
-      // On iOS Safari, iframe print triggers are blocked. Append temporary printable element directly to body
-      let printContainer = document.getElementById('ios-thermal-print-container');
-      if (!printContainer) {
-        printContainer = document.createElement('div');
-        printContainer.id = 'ios-thermal-print-container';
-        document.body.appendChild(printContainer);
-      }
-
-      printContainer.innerHTML = `
-        <style>
-          @media print {
-            body > *:not(#ios-thermal-print-container) {
-              display: none !important;
-            }
-            #ios-thermal-print-container {
-              display: block !important;
-              font-family: 'Courier New', Courier, monospace !important;
-              font-size: 10pt !important;
-              font-weight: bold !important;
-              color: #000 !important;
-              width: 58mm !important;
-              margin: 0 !important;
-              padding: 2mm !important;
-              white-space: pre-wrap !important;
-              word-break: break-word !important;
-            }
-            @page {
-              size: 58mm auto;
-              margin: 0;
-            }
-          }
-        </style>
-        <pre>${textReceipt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-      `;
-
-      window.print();
-      return;
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Comprovante Pedido #${order?.number || ''}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              @page {
+                size: 58mm auto;
+                margin: 0;
+              }
+              body {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 10pt;
+                font-weight: bold;
+                color: #000;
+                width: 58mm;
+                margin: 0 auto;
+                padding: 4mm 2mm;
+                white-space: pre-wrap;
+                word-break: break-word;
+              }
+            </style>
+          </head>
+          <body>
+            <pre>${textReceipt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+            <script>
+              window.onload = function() {
+                window.focus();
+                window.print();
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWin.document.close();
+      return true;
     }
+    return false;
+  };
 
-    // On Android / Desktop, iframe printing works great
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow?.document;
-    if (!doc) {
+  const handleNativePrint = () => {
+    // Try opening dedicated print window (works 100% on Chrome iOS, Safari iOS, Android & Desktop)
+    const success = openDedicatedPrintWindow();
+    if (!success) {
+      // Fallback if popup blocked: inline window print
       window.print();
-      return;
     }
-
-    doc.open();
-    doc.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Imprimir Pedido #${order?.number || ''}</title>
-          <style>
-            @page {
-              size: 58mm auto;
-              margin: 0;
-            }
-            body {
-              font-family: 'Courier New', Courier, monospace;
-              font-size: 10pt;
-              font-weight: bold;
-              color: #000;
-              width: 58mm;
-              margin: 0;
-              padding: 2mm;
-              white-space: pre-wrap;
-              word-break: break-word;
-            }
-          </style>
-        </head>
-        <body><pre>${textReceipt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre></body>
-      </html>
-    `);
-    doc.close();
-
-    setTimeout(() => {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-      setTimeout(() => {
-        if (iframe.parentNode) {
-          iframe.parentNode.removeChild(iframe);
-        }
-      }, 1000);
-    }, 250);
   };
 
   const handleCopyText = () => {
@@ -309,7 +264,7 @@ export default function ThermalPrintModal58mm({
     if (!('bluetooth' in navigator)) {
       if (isIOSDevice) {
         alert(
-          'No iOS (iPhone/iPad), o navegador Safari não permite acesso direto ao Bluetooth via Web API.\n\nUtilize o botão "Imprimir (58mm)" para enviar para sua impressora ou o botão "Copiar Texto" para colar no seu app de impressora (RawBT / POS Printer).'
+          'No iOS (iPhone/iPad), o navegador Safari/Chrome não permite acesso direto ao Bluetooth via Web API.\n\nUtilize o botão "Imprimir (58mm)" para abrir o cupom completo ou "Copiar Texto" para colar no seu app de impressora (RawBT / POS Printer).'
         );
       } else {
         alert('Seu navegador não suporta a API Web Bluetooth. Utilize o botão "Imprimir (58mm)" ou "Copiar Texto".');
@@ -389,14 +344,14 @@ export default function ThermalPrintModal58mm({
           </button>
         </div>
 
-        {/* iOS Warning Banner */}
+        {/* iOS Notice Banner */}
         {isIOSDevice && (
           <div className="bg-sky-50 border border-sky-200 rounded-2xl p-3.5 flex items-start gap-3">
             <Info className="h-5 w-5 text-sky-600 shrink-0 mt-0.5" />
             <div className="text-xs text-sky-900 space-y-1">
-              <p className="font-bold">No iOS (iPhone/iPad):</p>
+              <p className="font-bold">No iOS (Chrome / Safari no iPhone/iPad):</p>
               <p className="text-[11px] text-sky-800 leading-snug">
-                Utilize o botão <strong className="text-purple-700">Imprimir (58mm)</strong> para abrir o AirPrint do iOS ou <strong className="text-slate-800">Copiar Texto</strong> para colar no app de impressão (RawBT / POS Printer).
+                Clique em <strong className="text-purple-700">Imprimir (58mm)</strong> ou <strong className="text-sky-700">Abrir em Nova Aba</strong> para gerar a página limpa sem cortes, ou <strong className="text-slate-800">Copiar Texto</strong> para seu app de impressão (RawBT).
               </p>
             </div>
           </div>
@@ -414,23 +369,33 @@ export default function ThermalPrintModal58mm({
             </button>
 
             <button
+              onClick={openDedicatedPrintWindow}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-bold text-xs px-4 py-3 transition-all"
+            >
+              <ExternalLink className="h-4 w-4 text-sky-600" />
+              <span>Abrir em Nova Aba</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
               onClick={handleCopyText}
               className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs px-4 py-3 transition-all"
             >
               {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4 text-slate-600" />}
               <span>{copied ? 'Copiado!' : 'Copiar Texto'}</span>
             </button>
-          </div>
 
-          {!isIOSDevice && (
-            <button
-              onClick={handleBluetoothPrint}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs px-4 py-2.5 transition-all"
-            >
-              <Bluetooth className="h-4 w-4 text-emerald-600" />
-              <span>Conectar Impressora Bluetooth (iGET 58mm)</span>
-            </button>
-          )}
+            {!isIOSDevice && (
+              <button
+                onClick={handleBluetoothPrint}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs px-4 py-2.5 transition-all"
+              >
+                <Bluetooth className="h-4 w-4 text-emerald-600" />
+                <span>Bluetooth Direct</span>
+              </button>
+            )}
+          </div>
 
           {btStatus && (
             <p className="text-[11px] font-bold text-purple-600 text-center animate-pulse pt-1">
