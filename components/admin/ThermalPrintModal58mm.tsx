@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Printer, X, Copy, Check, Bluetooth, ExternalLink, Info } from 'lucide-react';
+import { Printer, X, Copy, Check, Bluetooth, ExternalLink, Info, Share2 } from 'lucide-react';
 
 interface OrderItemUI {
   id: string;
@@ -52,6 +52,15 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancelado',
 };
 
+// Helper: Strip accents & non-ASCII characters for 100% thermal printer firmware compatibility
+function stripAccents(str: string): string {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x00-\x7F]/g, '');
+}
+
 export default function ThermalPrintModal58mm({
   order,
   storeName = 'HENRI IMPORTS TABACARIA & VAPES',
@@ -74,10 +83,11 @@ export default function ThermalPrintModal58mm({
   }, []);
 
   const cleanCurrency = (val: number) => {
-    return formatCurrency(val || 0).replace(/\u00a0/g, ' ');
+    const formatted = formatCurrency(val || 0).replace(/\u00a0/g, ' ');
+    return stripAccents(formatted);
   };
 
-  // Generate 32-column formatted plain text receipt for 58mm thermal paper
+  // Generate 32-column formatted pure ASCII text receipt for 58mm thermal paper
   const generatePlainTextReceipt = () => {
     const width = 32;
     const divider = '-'.repeat(width);
@@ -87,18 +97,21 @@ export default function ThermalPrintModal58mm({
     const paymentText = PAYMENT_LABELS[order?.paymentMethod || 'PIX'] || order?.paymentMethod || 'PIX';
 
     const padCenter = (str: string) => {
-      const len = str.length;
-      if (len >= width) return str.substring(0, width);
+      const clean = stripAccents(str);
+      const len = clean.length;
+      if (len >= width) return clean.substring(0, width);
       const left = Math.floor((width - len) / 2);
-      return ' '.repeat(left) + str;
+      return ' '.repeat(left) + clean;
     };
 
     const formatLine = (left: string, right: string) => {
-      const spaceNeeded = width - left.length - right.length;
+      const cLeft = stripAccents(left);
+      const cRight = stripAccents(right);
+      const spaceNeeded = width - cLeft.length - cRight.length;
       if (spaceNeeded > 0) {
-        return left + ' '.repeat(spaceNeeded) + right;
+        return cLeft + ' '.repeat(spaceNeeded) + cRight;
       }
-      return left + ' ' + right;
+      return cLeft + ' ' + cRight;
     };
 
     let lines: string[] = [];
@@ -123,7 +136,7 @@ export default function ThermalPrintModal58mm({
     }
     lines.push(divider);
 
-    // Address Info - Fail-safe extraction guaranteed for iOS and Chrome
+    // Address Info - 100% Pure ASCII extraction to prevent thermal printer buffer truncations
     lines.push('ENDERECO DE ENTREGA:');
     const addr = order?.address;
     const streetText = addr?.street && addr.street.trim() !== '' ? addr.street.trim().toUpperCase() : null;
@@ -163,7 +176,7 @@ export default function ThermalPrintModal58mm({
         const priceStr = cleanCurrency((item.price || 0) * qty);
         const itemTitle = `${qty}x ${(item.productName || 'PRODUTO').toUpperCase()}`;
         
-        if (itemTitle.length + priceStr.length + 1 > width) {
+        if (stripAccents(itemTitle).length + priceStr.length + 1 > width) {
           lines.push(itemTitle);
           lines.push(formatLine('', priceStr));
         } else {
@@ -195,7 +208,8 @@ export default function ThermalPrintModal58mm({
     lines.push(doubleDivider);
     lines.push('\n\n');
 
-    return lines.join('\n');
+    // Normalize entire text to pure 7-bit ASCII for 100% thermal printer firmware compatibility
+    return lines.map((line) => stripAccents(line)).join('\n');
   };
 
   const openDedicatedPrintWindow = () => {
@@ -244,10 +258,8 @@ export default function ThermalPrintModal58mm({
   };
 
   const handleNativePrint = () => {
-    // Try opening dedicated print window (works 100% on Chrome iOS, Safari iOS, Android & Desktop)
     const success = openDedicatedPrintWindow();
     if (!success) {
-      // Fallback if popup blocked: inline window print
       window.print();
     }
   };
@@ -257,6 +269,14 @@ export default function ThermalPrintModal58mm({
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
+  };
+
+  // Direct RawBT / Thermal Printer Deep Link Trigger (Android & iOS)
+  const handleRawBTPrint = () => {
+    const text = generatePlainTextReceipt();
+    const encoded = encodeURIComponent(text);
+    // RawBT protocol scheme trigger
+    window.location.href = `intent:${encoded}#Intent;scheme=rawbt;package=ru.a404m.rawbtprinter;end;`;
   };
 
   // Direct Web Bluetooth Printer Connection for iGET / 58mm printers
@@ -351,7 +371,7 @@ export default function ThermalPrintModal58mm({
             <div className="text-xs text-sky-900 space-y-1">
               <p className="font-bold">No iOS (Chrome / Safari no iPhone/iPad):</p>
               <p className="text-[11px] text-sky-800 leading-snug">
-                Clique em <strong className="text-purple-700">Imprimir (58mm)</strong> ou <strong className="text-sky-700">Abrir em Nova Aba</strong> para gerar a página limpa sem cortes, ou <strong className="text-slate-800">Copiar Texto</strong> para seu app de impressão (RawBT).
+                Clique em <strong className="text-purple-700">Imprimir (58mm)</strong> ou <strong className="text-sky-700">Abrir em Nova Aba</strong> para gerar a página limpa sem cortes, ou <strong className="text-slate-800">Copiar Texto</strong> para seu app de impressão.
               </p>
             </div>
           </div>
@@ -386,13 +406,22 @@ export default function ThermalPrintModal58mm({
               <span>{copied ? 'Copiado!' : 'Copiar Texto'}</span>
             </button>
 
-            {!isIOSDevice && (
+            {!isIOSDevice ? (
               <button
                 onClick={handleBluetoothPrint}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-xs px-4 py-2.5 transition-all"
               >
                 <Bluetooth className="h-4 w-4 text-emerald-600" />
                 <span>Bluetooth Direct</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleRawBTPrint}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs px-4 py-2.5 transition-all"
+                title="Imprimir via App de Impressora (RawBT)"
+              >
+                <Printer className="h-4 w-4 text-amber-700" />
+                <span>App Impressora</span>
               </button>
             )}
           </div>
