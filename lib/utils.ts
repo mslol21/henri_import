@@ -18,15 +18,23 @@ export function slugify(text: string): string {
     .replace(/-+$/, '');
 }
 
-export function formatDate(dateString: string | Date): string {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+export function formatDate(dateString?: string | Date | null): string {
+  if (!dateString) return 'Data não informada';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Data não informada';
+    }
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  } catch (err) {
+    return 'Data não informada';
+  }
 }
 
 export function parseNumber(val: any): number | null {

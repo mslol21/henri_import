@@ -291,6 +291,7 @@ export async function getOrders(statusFilter?: string) {
         status: h.status as OrderStatusType,
         notes: h.notes,
         changedBy: h.changedBy,
+        createdAt: h.createdAt ? h.createdAt.toISOString() : new Date().toISOString(),
       })),
       };
     });
