@@ -228,36 +228,61 @@ export async function getOrders(statusFilter?: string) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map((o) => ({
-      id: o.id,
-      number: o.number,
-      client: {
-        id: o.client.id,
-        name: o.client.name,
-        phone: o.client.phone,
-        email: o.client.email,
-      },
-      address: o.address
-        ? {
-            cep: o.address.cep || '',
-            street: o.address.street || '',
-            number: o.address.number || '',
-            complement: o.address.complement || null,
-            neighborhood: o.address.neighborhood || '',
-            city: o.address.city || '',
-            state: o.address.state || '',
-            distanceKm: o.address.distanceKm || null,
+    // Fetch latest addresses for clients whose orders are missing direct address relation
+    const clientIdsMissingAddr = Array.from(
+      new Set(orders.filter((o) => !o.address && o.clientId).map((o) => o.clientId))
+    );
+
+    let clientAddrMap: Record<string, any> = {};
+    if (clientIdsMissingAddr.length > 0) {
+      try {
+        const addresses = await db.address.findMany({
+          where: { clientId: { in: clientIdsMissingAddr } },
+          orderBy: { createdAt: 'desc' },
+        });
+        addresses.forEach((addr) => {
+          if (!clientAddrMap[addr.clientId]) {
+            clientAddrMap[addr.clientId] = addr;
           }
-        : {
-            cep: '',
-            street: 'Endereço não informado',
-            number: 'S/N',
-            complement: null,
-            neighborhood: '',
-            city: '',
-            state: '',
-            distanceKm: null,
-          },
+        });
+      } catch (err) {
+        console.warn('Fallback address query error:', err);
+      }
+    }
+
+    return orders.map((o) => {
+      const activeAddr = o.address || clientAddrMap[o.clientId];
+
+      return {
+        id: o.id,
+        number: o.number,
+        client: {
+          id: o.client.id,
+          name: o.client.name,
+          phone: o.client.phone,
+          email: o.client.email,
+        },
+        address: activeAddr
+          ? {
+              cep: activeAddr.cep || '',
+              street: activeAddr.street || '',
+              number: activeAddr.number || '',
+              complement: activeAddr.complement || null,
+              neighborhood: activeAddr.neighborhood || '',
+              city: activeAddr.city || '',
+              state: activeAddr.state || '',
+              distanceKm: activeAddr.distanceKm || null,
+            }
+          : {
+              cep: '',
+              street: 'Endereço não informado',
+              number: 'S/N',
+              complement: null,
+              neighborhood: '',
+              city: '',
+              state: '',
+              distanceKm: null,
+            },
       items: o.items.map((i) => ({
         id: i.id,
         productId: i.productId,
@@ -280,9 +305,9 @@ export async function getOrders(statusFilter?: string) {
         status: h.status as OrderStatusType,
         notes: h.notes,
         changedBy: h.changedBy,
-        createdAt: h.createdAt.toISOString(),
       })),
-    }));
+      };
+    });
   } catch (err: any) {
     console.error('Error fetching orders:', err);
     return [];
