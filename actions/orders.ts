@@ -213,7 +213,14 @@ export async function getOrders(statusFilter?: string) {
     const orders = await db.order.findMany({
       where: whereClause,
       include: {
-        client: true,
+        client: {
+          include: {
+            addresses: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+        },
         address: true,
         items: {
           include: {
@@ -228,30 +235,9 @@ export async function getOrders(statusFilter?: string) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Fetch latest addresses for clients whose orders are missing direct address relation
-    const clientIdsMissingAddr = Array.from(
-      new Set(orders.filter((o) => !o.address && o.clientId).map((o) => o.clientId))
-    );
-
-    let clientAddrMap: Record<string, any> = {};
-    if (clientIdsMissingAddr.length > 0) {
-      try {
-        const addresses = await db.address.findMany({
-          where: { clientId: { in: clientIdsMissingAddr } },
-          orderBy: { createdAt: 'desc' },
-        });
-        addresses.forEach((addr) => {
-          if (!clientAddrMap[addr.clientId]) {
-            clientAddrMap[addr.clientId] = addr;
-          }
-        });
-      } catch (err) {
-        console.warn('Fallback address query error:', err);
-      }
-    }
-
     return orders.map((o) => {
-      const activeAddr = o.address || clientAddrMap[o.clientId];
+      const clientFallbackAddr = (o.client as any)?.addresses?.[0] || null;
+      const activeAddr = o.address || clientFallbackAddr;
 
       return {
         id: o.id,
