@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Printer, X, Copy, Check, Bluetooth, ExternalLink, Info, Share2 } from 'lucide-react';
+import { Printer, X, Copy, Check, Bluetooth, ExternalLink, Info } from 'lucide-react';
 
 interface OrderItemUI {
   id: string;
@@ -87,9 +87,9 @@ export default function ThermalPrintModal58mm({
     return stripAccents(formatted);
   };
 
-  // Generate 32-column formatted pure ASCII text receipt for 58mm thermal paper
+  // Generate 30-column formatted pure ASCII CRLF text receipt for 58mm thermal paper
   const generatePlainTextReceipt = () => {
-    const width = 32;
+    const width = 30; // 30 chars width guarantees no auto-wrap collisions on 58mm paper
     const divider = '-'.repeat(width);
     const doubleDivider = '='.repeat(width);
     const dateStr = order?.createdAt ? formatDate(order.createdAt) : '';
@@ -136,8 +136,8 @@ export default function ThermalPrintModal58mm({
     }
     lines.push(divider);
 
-    // Address Info - 100% Pure ASCII extraction to prevent thermal printer buffer truncations
-    lines.push('ENDERECO DE ENTREGA:');
+    // Address Info - Explicit key-value formatting to ensure thermal printer hardware buffer never skips lines
+    lines.push('[ ENDERECO DE ENTREGA ]');
     const addr = order?.address;
     const streetText = addr?.street && addr.street.trim() !== '' ? addr.street.trim().toUpperCase() : null;
     const cepText = addr?.cep && addr.cep.trim() !== '' ? addr.cep.trim() : null;
@@ -146,8 +146,8 @@ export default function ThermalPrintModal58mm({
     const stateText = addr?.state && addr.state.trim() !== '' ? addr.state.trim().toUpperCase() : null;
 
     if (streetText || cepText || neighText || cityText) {
-      const numText = addr?.number && addr.number.trim() !== '' ? `N ${addr.number.trim()}` : 'S/N';
-      lines.push(`${streetText || 'ENDERECO NAO ESPECIFICADO'}, ${numText}`);
+      lines.push(`RUA: ${streetText || 'NAO INFORMADA'}`);
+      lines.push(`NUM: ${addr?.number ? addr.number.trim() : 'S/N'}`);
       if (addr?.complement && addr.complement.trim() !== '') {
         lines.push(`COMPL: ${addr.complement.trim().toUpperCase()}`);
       }
@@ -161,31 +161,25 @@ export default function ThermalPrintModal58mm({
         lines.push(`CEP: ${cepText}`);
       }
       if (addr?.distanceKm) {
-        lines.push(`DISTANCIA: ~${addr.distanceKm} KM`);
+        lines.push(`DIST: ~${addr.distanceKm} KM`);
       }
     } else {
-      lines.push('RETIRADA NA LOJA / ENTREGA A COMBINAR');
+      lines.push('RETIRADA NA LOJA / A COMBINAR');
     }
     lines.push(divider);
 
-    // Items List
-    lines.push('ITENS SOLICITADOS:');
+    // Items List - Explicit key-value formatting
+    lines.push('[ ITENS SOLICITADOS ]');
     if (order?.items && order.items.length > 0) {
       order.items.forEach((item) => {
         const qty = item.quantity || 1;
         const priceStr = cleanCurrency((item.price || 0) * qty);
-        const itemTitle = `${qty}x ${(item.productName || 'PRODUTO').toUpperCase()}`;
-        
-        if (stripAccents(itemTitle).length + priceStr.length + 1 > width) {
-          lines.push(itemTitle);
-          lines.push(formatLine('', priceStr));
-        } else {
-          lines.push(formatLine(itemTitle, priceStr));
-        }
-
+        lines.push(`PRODUTO: ${qty}x ${(item.productName || 'PRODUTO').toUpperCase()}`);
         if (item.flavorName) {
-          lines.push(`   SABOR: ${item.flavorName.toUpperCase()}`);
+          lines.push(`SABOR: ${item.flavorName.toUpperCase()}`);
         }
+        lines.push(formatLine('VALOR:', priceStr));
+        lines.push('-');
       });
     } else {
       lines.push('NENHUM ITEM');
@@ -206,10 +200,11 @@ export default function ThermalPrintModal58mm({
     lines.push(doubleDivider);
     lines.push(padCenter('OBRIGADO PELA PREFERENCIA!'));
     lines.push(doubleDivider);
-    lines.push('\n\n');
+    lines.push('');
+    lines.push('');
 
-    // Normalize entire text to pure 7-bit ASCII for 100% thermal printer firmware compatibility
-    return lines.map((line) => stripAccents(line)).join('\n');
+    // Normalize entire text to pure 7-bit ASCII with hardware standard CRLF line endings
+    return lines.map((line) => stripAccents(line)).join('\r\n');
   };
 
   const openDedicatedPrintWindow = () => {
@@ -275,7 +270,6 @@ export default function ThermalPrintModal58mm({
   const handleRawBTPrint = () => {
     const text = generatePlainTextReceipt();
     const encoded = encodeURIComponent(text);
-    // RawBT protocol scheme trigger
     window.location.href = `intent:${encoded}#Intent;scheme=rawbt;package=ru.a404m.rawbtprinter;end;`;
   };
 
