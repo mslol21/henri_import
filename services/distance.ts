@@ -41,14 +41,36 @@ export function calculateHaversineDistance(
   return Math.round(distance * 10) / 10;
 }
 
-// Calculate REAL DRIVING ROUTE distance via multi-provider OpenStreetMap Routing Engines (OSRM)
+// Calculate REAL DRIVING ROUTE distance via multi-provider OpenStreetMap & Google Routing Engines
 export async function getDrivingRouteDistanceKm(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): Promise<number> {
-  // 1. Primary: OSRM Public Server
+  // 1. Primary (If API key set): Google Maps Distance Matrix API
+  const googleApiKey =
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (googleApiKey) {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat1},${lon1}&destinations=${lat2},${lon2}&mode=driving&language=pt-BR&key=${googleApiKey}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const element = data.rows?.[0]?.elements?.[0];
+        if (element?.status === 'OK' && element.distance?.value) {
+          const km = element.distance.value / 1000;
+          return Math.round(km * 10) / 10;
+        }
+      }
+    } catch (err) {
+      console.warn('Google Distance Matrix error, trying OSRM:', err);
+    }
+  }
+
+  // 2. Secondary: OSRM Public Server
   try {
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
     const res = await fetch(osrmUrl, {
@@ -67,7 +89,7 @@ export async function getDrivingRouteDistanceKm(
     console.warn('OSRM Primary Routing error, trying secondary routing server:', err);
   }
 
-  // 2. Secondary: OpenStreetMap Germany Routed-Car Server
+  // 3. Tertiary: OpenStreetMap Germany Routed-Car Server
   try {
     const backupOsrmUrl = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
     const res = await fetch(backupOsrmUrl, {
@@ -83,29 +105,7 @@ export async function getDrivingRouteDistanceKm(
       }
     }
   } catch (err) {
-    console.warn('OSRM Backup Routing error, trying Google / Haversine fallback:', err);
-  }
-
-  // 3. Backup: Google Maps Distance Matrix API if key is present
-  const googleApiKey =
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  if (googleApiKey) {
-    try {
-      const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat1},${lon1}&destinations=${lat2},${lon2}&mode=driving&language=pt-BR&key=${googleApiKey}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        const element = data.rows?.[0]?.elements?.[0];
-        if (element?.status === 'OK' && element.distance?.value) {
-          const km = element.distance.value / 1000;
-          return Math.round(km * 10) / 10;
-        }
-      }
-    } catch (err) {
-      console.warn('Google Distance Matrix error:', err);
-    }
+    console.warn('OSRM Backup Routing error, trying Haversine fallback:', err);
   }
 
   // 4. Fallback: Straight line * 1.35 urban road detour factor
@@ -135,17 +135,19 @@ export async function lookupAddressByCep(cepRaw: string) {
   };
 }
 
+// Urban CEP geography estimate based on 5-digit Brazilian postal code prefix density
 export function estimateCoordsFromCep(cleanClient: string, cleanStore: string, defaultLat: number, defaultLon: number) {
   const clientNum = parseInt(cleanClient.substring(0, 5) || '0', 10);
   const storeNum = parseInt(cleanStore.substring(0, 5) || '0', 10);
   const diff = storeNum ? Math.abs(clientNum - storeNum) : 0;
 
-  const approxKm = Math.min(30, Math.max(0.5, diff * 0.05));
+  // Real urban CEP geography factor in Brazil: ~0.45km per CEP 5-digit prefix unit
+  const approxKm = Math.min(45, Math.max(0.8, diff * 0.45));
   const approxDeg = approxKm / 111;
 
   return {
-    lat: defaultLat + approxDeg,
-    lon: defaultLon + approxDeg,
+    lat: defaultLat + approxDeg * 0.7,
+    lon: defaultLon + approxDeg * 0.7,
   };
 }
 
