@@ -41,14 +41,14 @@ export function calculateHaversineDistance(
   return Math.round(distance * 10) / 10;
 }
 
-// Calculate REAL DRIVING ROUTE distance via OSRM (OpenStreetMap Routing Engine)
+// Calculate REAL DRIVING ROUTE distance via multi-provider OpenStreetMap Routing Engines (OSRM)
 export async function getDrivingRouteDistanceKm(
   lat1: number,
   lon1: number,
   lat2: number,
   lon2: number
 ): Promise<number> {
-  // 1. Primary: OSRM (OpenStreetMap) Driving Route API
+  // 1. Primary: OSRM Public Server
   try {
     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
     const res = await fetch(osrmUrl, {
@@ -64,10 +64,29 @@ export async function getDrivingRouteDistanceKm(
       }
     }
   } catch (err) {
-    console.warn('OSRM (OpenStreetMap) Routing API error, trying fallback:', err);
+    console.warn('OSRM Primary Routing error, trying secondary routing server:', err);
   }
 
-  // 2. Backup: Google Maps Distance Matrix API if key is present
+  // 2. Secondary: OpenStreetMap Germany Routed-Car Server
+  try {
+    const backupOsrmUrl = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+    const res = await fetch(backupOsrmUrl, {
+      headers: { 'User-Agent': 'HenriImportsApp/1.0' },
+      cache: 'no-store',
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.code === 'Ok' && data.routes && data.routes.length > 0 && data.routes[0].distance) {
+        const drivingKm = data.routes[0].distance / 1000;
+        return Math.round(drivingKm * 10) / 10;
+      }
+    }
+  } catch (err) {
+    console.warn('OSRM Backup Routing error, trying Google / Haversine fallback:', err);
+  }
+
+  // 3. Backup: Google Maps Distance Matrix API if key is present
   const googleApiKey =
     process.env.GOOGLE_MAPS_API_KEY ||
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -89,7 +108,7 @@ export async function getDrivingRouteDistanceKm(
     }
   }
 
-  // 3. Fallback: Straight line * 1.35 urban road detour factor
+  // 4. Fallback: Straight line * 1.35 urban road detour factor
   const haversine = calculateHaversineDistance(lat1, lon1, lat2, lon2);
   return Math.round(haversine * 1.35 * 10) / 10;
 }
@@ -130,7 +149,7 @@ export function estimateCoordsFromCep(cleanClient: string, cleanStore: string, d
   };
 }
 
-// Multi-provider high-precision coordinate finder (BrasilAPI v2 + OpenStreetMap + Google Geocoding)
+// Multi-provider high-precision coordinate finder (AwesomeAPI + BrasilAPI v2 + Nominatim + Google)
 export async function getCoordsForAddress({
   cep,
   street,
@@ -154,28 +173,75 @@ export async function getCoordsForAddress({
 }): Promise<{ lat: number; lon: number }> {
   const cleanCep = cep.replace(/\D/g, '');
 
-  // 1. Primary: BrasilAPI v2 (High-precision CEP coordinates in Brazil)
   if (cleanCep.length === 8) {
+    // 1. Primary: AwesomeAPI CEP (Returns exact lat/lng for Brazilian CEPs)
     try {
-      const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCep}`, {
+      const res = await fetch(`https://cep.awesomeapi.com.br/json/${cleanCep}`, {
         cache: 'no-store',
       });
       if (res.ok) {
         const data = await res.json();
-        if (data?.location?.coordinates?.latitude && data?.location?.coordinates?.longitude) {
-          const lat = parseFloat(data.location.coordinates.latitude);
-          const lon = parseFloat(data.location.coordinates.longitude);
+        if (data && data.lat && data.lng) {
+          const lat = parseFloat(data.lat);
+          const lon = parseFloat(data.lng);
           if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
             return { lat, lon };
           }
         }
       }
     } catch (err) {
-      console.warn('BrasilAPI v2 CEP location error, trying OpenStreetMap:', err);
+      console.warn('AwesomeAPI CEP error, trying BrasilAPI:', err);
+    }
+
+    // 2. Secondary: BrasilAPI v2 (Supports GeoJSON array [lon, lat] and object {latitude, longitude})
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCep}`, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const coords = data?.location?.coordinates;
+        if (coords) {
+          let lat = 0;
+          let lon = 0;
+          if (Array.isArray(coords) && coords.length >= 2) {
+            lon = parseFloat(coords[0]);
+            lat = parseFloat(coords[1]);
+          } else if (coords.latitude && coords.longitude) {
+            lat = parseFloat(coords.latitude);
+            lon = parseFloat(coords.longitude);
+          }
+          if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+            return { lat, lon };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('BrasilAPI v2 error, trying Nominatim PostalCode:', err);
+    }
+
+    // 3. Tertiary: Nominatim Dedicated Postal Code Query
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?postalcode=${cleanCep}&country=Brazil&format=json&limit=1`,
+        { headers: { 'User-Agent': 'HenriImportsApp/1.0' } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.length > 0 && data[0].lat && data[0].lon) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+            return { lat, lon };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Nominatim PostalCode search error:', err);
     }
   }
 
-  // 2. Secondary: OpenStreetMap Nominatim Search
+  // 4. Quaternary: OpenStreetMap Full Address Query
   try {
     const fullQuery = [number ? `${street}, ${number}` : street, neighborhood, city, state, 'Brasil']
       .filter(Boolean)
@@ -194,10 +260,10 @@ export async function getCoordsForAddress({
       }
     }
   } catch (err) {
-    console.warn('Geocoding error, falling back to Google/CEP distance:', err);
+    console.warn('Geocoding full address error:', err);
   }
 
-  // 3. Backup: Google Maps Geocoding API if key is present
+  // 5. Quinary: Google Maps Geocoding API if key is present
   const googleApiKey =
     process.env.GOOGLE_MAPS_API_KEY ||
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -219,7 +285,7 @@ export async function getCoordsForAddress({
     }
   }
 
-  // 4. Fallback coordinate calculation using CEP prefix math
+  // Fallback coordinate calculation using CEP prefix math
   const defaultLat = storeLat || -23.5616;
   const defaultLon = storeLon || -46.656;
   const cleanStore = (storeCep || '01310100').replace(/\D/g, '');
