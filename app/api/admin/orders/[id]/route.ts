@@ -26,20 +26,39 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       });
     }
 
-    // 2. Update Address info if provided
+    // 2. Update or Create Address info if provided
     if (body.address) {
-      await db.address.update({
-        where: { id: existingOrder.addressId },
-        data: {
-          ...(body.address.street !== undefined && { street: body.address.street.trim() }),
-          ...(body.address.number !== undefined && { number: body.address.number.trim() }),
-          ...(body.address.complement !== undefined && { complement: body.address.complement?.trim() || null }),
-          ...(body.address.neighborhood !== undefined && { neighborhood: body.address.neighborhood.trim() }),
-          ...(body.address.city !== undefined && { city: body.address.city.trim() }),
-          ...(body.address.state !== undefined && { state: body.address.state.trim() }),
-          ...(body.address.cep !== undefined && { cep: body.address.cep.trim() }),
-        },
-      });
+      if (existingOrder.addressId) {
+        await db.address.update({
+          where: { id: existingOrder.addressId },
+          data: {
+            ...(body.address.street !== undefined && { street: body.address.street.trim() }),
+            ...(body.address.number !== undefined && { number: body.address.number.trim() }),
+            ...(body.address.complement !== undefined && { complement: body.address.complement?.trim() || null }),
+            ...(body.address.neighborhood !== undefined && { neighborhood: body.address.neighborhood.trim() }),
+            ...(body.address.city !== undefined && { city: body.address.city.trim() }),
+            ...(body.address.state !== undefined && { state: body.address.state.trim() }),
+            ...(body.address.cep !== undefined && { cep: body.address.cep.trim() }),
+          },
+        });
+      } else {
+        const newAddr = await db.address.create({
+          data: {
+            clientId: existingOrder.clientId,
+            street: body.address.street ? body.address.street.trim() : 'Endereço não informado',
+            number: body.address.number ? body.address.number.trim() : 'S/N',
+            complement: body.address.complement ? body.address.complement.trim() : null,
+            neighborhood: body.address.neighborhood ? body.address.neighborhood.trim() : '',
+            city: body.address.city ? body.address.city.trim() : '',
+            state: body.address.state ? body.address.state.trim() : '',
+            cep: body.address.cep ? body.address.cep.trim() : '',
+          },
+        });
+        await db.order.update({
+          where: { id },
+          data: { addressId: newAddr.id },
+        });
+      }
     }
 
     // 3. Update Order items if provided
