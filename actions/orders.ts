@@ -53,6 +53,7 @@ export async function createOrder(
           const coords = await getCoordsForAddress({
             cep: data.cep.trim(),
             street: data.street.trim(),
+            number: data.number.trim(),
             neighborhood: data.neighborhood.trim(),
             city: data.city.trim(),
             state: data.state.trim(),

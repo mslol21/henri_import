@@ -130,10 +130,11 @@ export function estimateCoordsFromCep(cleanClient: string, cleanStore: string, d
   };
 }
 
-// Fallback coordinate finder using ViaCEP & OpenStreetMap Nominatim
+// Multi-provider high-precision coordinate finder (BrasilAPI v2 + OpenStreetMap + Google Geocoding)
 export async function getCoordsForAddress({
   cep,
   street,
+  number,
   neighborhood,
   city,
   state,
@@ -143,6 +144,7 @@ export async function getCoordsForAddress({
 }: {
   cep: string;
   street?: string;
+  number?: string;
   neighborhood?: string;
   city?: string;
   state?: string;
@@ -152,9 +154,32 @@ export async function getCoordsForAddress({
 }): Promise<{ lat: number; lon: number }> {
   const cleanCep = cep.replace(/\D/g, '');
 
-  // 1. Attempt geocoding via OpenStreetMap Nominatim
+  // 1. Primary: BrasilAPI v2 (High-precision CEP coordinates in Brazil)
+  if (cleanCep.length === 8) {
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCep}`, {
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.location?.coordinates?.latitude && data?.location?.coordinates?.longitude) {
+          const lat = parseFloat(data.location.coordinates.latitude);
+          const lon = parseFloat(data.location.coordinates.longitude);
+          if (!isNaN(lat) && !isNaN(lon) && lat !== 0 && lon !== 0) {
+            return { lat, lon };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('BrasilAPI v2 CEP location error, trying OpenStreetMap:', err);
+    }
+  }
+
+  // 2. Secondary: OpenStreetMap Nominatim Search
   try {
-    const fullQuery = [street, neighborhood, city, state, 'Brasil'].filter(Boolean).join(', ');
+    const fullQuery = [number ? `${street}, ${number}` : street, neighborhood, city, state, 'Brasil']
+      .filter(Boolean)
+      .join(', ');
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`,
       { headers: { 'User-Agent': 'HenriImportsApp/1.0' } }
@@ -169,13 +194,34 @@ export async function getCoordsForAddress({
       }
     }
   } catch (err) {
-    console.warn('Geocoding error, falling back to CEP distance:', err);
+    console.warn('Geocoding error, falling back to Google/CEP distance:', err);
   }
 
-  // 2. Fallback distance calculation using CEP prefix math
+  // 3. Backup: Google Maps Geocoding API if key is present
+  const googleApiKey =
+    process.env.GOOGLE_MAPS_API_KEY ||
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (googleApiKey) {
+    try {
+      const fullAddress = `${street || ''} ${number || ''}, ${city || ''} - ${state || ''}, ${cleanCep}, Brasil`;
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(fullAddress)}&key=${googleApiKey}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const loc = data.results?.[0]?.geometry?.location;
+        if (loc?.lat && loc?.lng) {
+          return { lat: loc.lat, lon: loc.lng };
+        }
+      }
+    } catch (err) {
+      console.warn('Google Geocoding error:', err);
+    }
+  }
+
+  // 4. Fallback coordinate calculation using CEP prefix math
   const defaultLat = storeLat || -23.5616;
   const defaultLon = storeLon || -46.656;
-
   const cleanStore = (storeCep || '01310100').replace(/\D/g, '');
   return estimateCoordsFromCep(cleanCep, cleanStore, defaultLat, defaultLon);
 }

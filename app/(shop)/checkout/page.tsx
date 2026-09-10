@@ -120,6 +120,7 @@ export default function CheckoutPage() {
       const clientCoords = await getCoordsForAddress({
         cep,
         street: addr.street,
+        number: watch('number'),
         neighborhood: addr.neighborhood,
         city: addr.city,
         state: addr.state,
@@ -167,6 +168,7 @@ export default function CheckoutPage() {
           const coords = await getCoordsForAddress({
             cep: formData.cep.trim(),
             street: formData.street,
+            number: formData.number,
             neighborhood: formData.neighborhood,
             city: formData.city,
             state: formData.state,
