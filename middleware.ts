@@ -14,7 +14,10 @@ export function middleware(request: NextRequest) {
 
   if ((isAdminRoute && !isLoginPage) || (isAdminApiRoute && !isLoginApi)) {
     const adminToken = request.cookies.get('admin_token')?.value;
-    const expectedToken = process.env.ADMIN_TOKEN || 'fallback_secret_token_123';
+    const expectedToken = process.env.ADMIN_TOKEN;
+    if (!expectedToken) {
+      return NextResponse.json({ error: 'Autenticação administrativa não configurada.' }, { status: 503 });
+    }
 
     if (!adminToken || adminToken !== expectedToken) {
       if (isAdminApiRoute) {
