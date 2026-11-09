@@ -4,9 +4,12 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@loja.com';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'admin';
-    const adminToken = process.env.ADMIN_TOKEN || 'fallback_secret_token_123';
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminToken = process.env.ADMIN_TOKEN;
+    if (!adminEmail || !adminPassword || !adminToken) {
+      return NextResponse.json({ error: 'Autenticação administrativa não configurada.' }, { status: 503 });
+    }
 
     if (email === adminEmail && password === adminPassword) {
       // Create response
