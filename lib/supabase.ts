@@ -15,6 +15,23 @@ export function fileToBase64(file: File): Promise<string> {
 }
 
 export async function uploadImage(file: File, bucket = 'products'): Promise<string> {
+  // Neon is enabled only after the environment is explicitly configured.
+  // The browser never receives S3 credentials or the PostgreSQL password.
+  if (process.env.NEXT_PUBLIC_STORAGE_PROVIDER === 'neon') {
+    if (bucket !== 'products') throw new Error('Bucket inválido.');
+    const form = new FormData();
+    form.set('file', file);
+    const response = await fetch('/api/admin/storage/upload', {
+      method: 'POST',
+      body: form,
+      credentials: 'same-origin',
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || typeof result.url !== 'string') {
+      throw new Error(result.error || 'Falha ao armazenar imagem no Neon.');
+    }
+    return result.url;
+  }
   try {
     const isSupabaseConfigured =
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
