@@ -1,9 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, ensureNeonReady, isDatabaseConfigured } from '@/lib/db';
+import { mockClients } from '@/lib/mockData';
+
+function formatFallbackClients() {
+  return mockClients.map((c: any) => {
+    const orders = c.orders || [];
+    const totalSpent = orders.reduce((sum: number, o: any) => sum + (o.total || 0), 0);
+    const sortedOrders = [...orders].sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    const lastOrder = sortedOrders[0];
+    const addr = (c.addresses || [])[0];
+    const addressStr = addr
+      ? `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}/${addr.state}`
+      : '';
+
+    return {
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      email: c.email ?? '',
+      ordersCount: orders.length,
+      totalSpent,
+      lastPurchase: lastOrder?.createdAt ?? null,
+      address: addressStr,
+      createdAt: c.createdAt,
+    };
+  });
+}
 
 // GET /api/admin/clients — list all clients with order stats
 export async function GET() {
+  if (!isDatabaseConfigured) {
+    return NextResponse.json(formatFallbackClients());
+  }
   try {
+    await ensureNeonReady();
     const clients = await db.client.findMany({
       include: {
         orders: { select: { total: true, createdAt: true } },
@@ -11,6 +43,10 @@ export async function GET() {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    if (clients.length === 0) {
+      return NextResponse.json(formatFallbackClients());
+    }
 
     const data = clients.map((c) => {
       const totalSpent = c.orders.reduce((sum, o) => sum + (o.total || 0), 0);
@@ -38,8 +74,8 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('GET /api/admin/clients error:', error);
-    return NextResponse.json([], { status: 200 }); // Return empty list gracefully instead of 500
+    console.error('GET /api/admin/clients error, using backup clients:', error);
+    return NextResponse.json(formatFallbackClients(), { status: 200 });
   }
 }
 

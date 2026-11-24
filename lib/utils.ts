@@ -52,6 +52,10 @@ export function getCleanImageUrl(url?: string | null, fallback = '/images/hero-b
   if (!url || typeof url !== 'string' || url.trim() === '' || url.startsWith('blob:')) {
     return fallback;
   }
+  if (url.includes('/storage/v1/object/public/products/')) {
+    const fileName = url.split('/storage/v1/object/public/products/')[1].split('?')[0];
+    return `/storage/products/${fileName}`;
+  }
   return url;
 }
 

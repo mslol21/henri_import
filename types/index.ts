@@ -67,8 +67,9 @@ export interface ProductData {
   internalCode?: string | null;
   mainImageUrl: string;
   gallery: string[];
-  weight: number;
+  weight?: number | null;
   active: boolean;
+  createdAt?: string | Date;
   flavors?: FlavorData[];
 }
 

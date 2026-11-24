@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, ensureNeonReady, isDatabaseConfigured } from '@/lib/db';
+import { mockCategories } from '@/lib/mockData';
+import { getCleanImageUrl } from '@/lib/utils';
 
 export async function GET() {
+  const getFallbackAdminCategories = () =>
+    mockCategories.map((c) => ({
+      ...c,
+      imageUrl: c.imageUrl ? getCleanImageUrl(c.imageUrl) : null,
+      _count: { products: c.productCount ?? 0 },
+    }));
+
+  if (!isDatabaseConfigured) {
+    return NextResponse.json(getFallbackAdminCategories());
+  }
   try {
+    await ensureNeonReady();
     const categories = await db.category.findMany({
       orderBy: { displayOrder: 'asc' },
       include: {
@@ -12,10 +25,19 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json(categories);
+    if (categories.length === 0) {
+      return NextResponse.json(getFallbackAdminCategories());
+    }
+
+    return NextResponse.json(
+      categories.map((c) => ({
+        ...c,
+        imageUrl: c.imageUrl ? getCleanImageUrl(c.imageUrl) : null,
+      }))
+    );
   } catch (error) {
-    console.error('GET /api/admin/categories error:', error);
-    return NextResponse.json([], { status: 200 });
+    console.error('GET /api/admin/categories error, using backup categories:', error);
+    return NextResponse.json(getFallbackAdminCategories(), { status: 200 });
   }
 }
 

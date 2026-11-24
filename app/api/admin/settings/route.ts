@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, ensureNeonReady, isDatabaseConfigured } from '@/lib/db';
+import { mockConfig } from '@/lib/mockData';
 import { cookies } from 'next/headers';
 
 // GET — retorna config atual do banco
 export async function GET() {
+  if (!isDatabaseConfigured) {
+    return NextResponse.json(mockConfig);
+  }
   try {
+    await ensureNeonReady();
     const config = await db.storeConfig.findUnique({
       where: { id: 'default' },
     });
 
     if (!config) {
-      return NextResponse.json({ error: 'Config not found' }, { status: 404 });
+      return NextResponse.json(mockConfig);
     }
 
     return NextResponse.json(config);
   } catch (err: any) {
-    console.error('GET /api/admin/settings error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('GET /api/admin/settings error, using backup config:', err);
+    return NextResponse.json(mockConfig);
   }
 }
 

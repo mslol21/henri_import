@@ -1,11 +1,15 @@
 'use server';
 
-import { db } from '@/lib/db';
+import { db, ensureNeonReady, isDatabaseConfigured } from '@/lib/db';
 import { mockConfig } from '@/lib/mockData';
 import { StoreConfigData } from '@/types';
 
 export async function getStoreConfig(): Promise<StoreConfigData> {
+  if (!isDatabaseConfigured) {
+    return mockConfig;
+  }
   try {
+    await ensureNeonReady();
     const config = await db.storeConfig.findUnique({
       where: { id: 'default' },
     });

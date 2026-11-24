@@ -1,9 +1,42 @@
 'use server';
 
-import { db } from '@/lib/db';
+import { db, ensureNeonReady, isDatabaseConfigured } from '@/lib/db';
 import { mockProducts } from '@/lib/mockData';
 import { ProductData, FlavorData } from '@/types';
-import { slugify } from '@/lib/utils';
+import { slugify, getCleanImageUrl } from '@/lib/utils';
+
+function filterMockProducts(params?: {
+  categorySlug?: string;
+  search?: string;
+  brand?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  promoOnly?: boolean;
+  inStockOnly?: boolean;
+}): ProductData[] {
+  let list = mockProducts.filter((p) => p.active);
+  if (params?.categorySlug) {
+    list = list.filter((p) => p.category?.slug === params.categorySlug);
+  }
+  if (params?.search) {
+    const q = params.search.toLowerCase();
+    list = list.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        (p.flavors && p.flavors.some((f) => f.name.toLowerCase().includes(q)))
+    );
+  }
+  if (params?.brand) {
+    const b = params.brand.toLowerCase();
+    list = list.filter((p) => p.brand.toLowerCase() === b);
+  }
+  if (params?.promoOnly) {
+    list = list.filter((p) => p.basePromoPrice !== null && p.basePromoPrice !== undefined);
+  }
+  return list;
+}
 
 export async function getProducts(params?: {
   categorySlug?: string;
@@ -14,7 +47,11 @@ export async function getProducts(params?: {
   promoOnly?: boolean;
   inStockOnly?: boolean;
 }): Promise<ProductData[]> {
+  if (!isDatabaseConfigured) {
+    return filterMockProducts(params);
+  }
   try {
+    await ensureNeonReady();
     let whereClause: any = { active: true };
 
     if (params?.categorySlug) {
@@ -51,6 +88,10 @@ export async function getProducts(params?: {
       orderBy: { createdAt: 'desc' },
     });
 
+    if (dbProducts.length === 0 && !params?.search && !params?.categorySlug && !params?.brand && !params?.promoOnly) {
+      return filterMockProducts(params);
+    }
+
     return dbProducts.map((p) => ({
       id: p.id,
       name: p.name,
@@ -62,9 +103,9 @@ export async function getProducts(params?: {
             id: p.category.id,
             name: p.category.name,
             slug: p.category.slug,
-            icon: p.category.icon,
+            icon: p.category.icon || 'Zap',
             imageUrl: p.category.imageUrl,
-            color: p.category.color,
+            color: p.category.color || '#0284c7',
             displayOrder: p.category.displayOrder,
             active: p.category.active,
           }
@@ -78,15 +119,15 @@ export async function getProducts(params?: {
       baseStock: p.baseStock,
       baseSku: p.baseSku,
       internalCode: p.internalCode,
-      mainImageUrl: p.mainImageUrl,
-      gallery: (p.gallery as string[]) || [],
+      mainImageUrl: getCleanImageUrl(p.mainImageUrl),
+      gallery: Array.isArray(p.gallery) ? (p.gallery as string[]).map((u) => getCleanImageUrl(u)) : [],
       weight: p.weight,
       active: p.active,
       flavors: p.flavors.map((f) => ({
         id: f.id,
         productId: f.productId,
         name: f.name,
-        imageUrl: f.imageUrl,
+        imageUrl: f.imageUrl ? getCleanImageUrl(f.imageUrl) : null,
         price: f.price,
         wholesalePrice: f.wholesalePrice,
         stock: f.stock,
@@ -97,13 +138,17 @@ export async function getProducts(params?: {
       })),
     }));
   } catch (err) {
-    console.error('Database query failed for products:', err);
-    return [];
+    console.error('Database query failed for products, using backup catalog:', err);
+    return filterMockProducts(params);
   }
 }
 
 export async function getProductBySlug(slug: string): Promise<ProductData | null> {
+  if (!isDatabaseConfigured) {
+    return mockProducts.find((p) => p.slug === slug) || null;
+  }
   try {
+    await ensureNeonReady();
     const dbProduct = await db.product.findUnique({
       where: { slug },
       include: {
@@ -127,9 +172,9 @@ export async function getProductBySlug(slug: string): Promise<ProductData | null
               id: dbProduct.category.id,
               name: dbProduct.category.name,
               slug: dbProduct.category.slug,
-              icon: dbProduct.category.icon,
+              icon: dbProduct.category.icon || 'Zap',
               imageUrl: dbProduct.category.imageUrl,
-              color: dbProduct.category.color,
+              color: dbProduct.category.color || '#0284c7',
               displayOrder: dbProduct.category.displayOrder,
               active: dbProduct.category.active,
             }
@@ -143,15 +188,15 @@ export async function getProductBySlug(slug: string): Promise<ProductData | null
         baseStock: dbProduct.baseStock,
         baseSku: dbProduct.baseSku,
         internalCode: dbProduct.internalCode,
-        mainImageUrl: dbProduct.mainImageUrl,
-        gallery: (dbProduct.gallery as string[]) || [],
+        mainImageUrl: getCleanImageUrl(dbProduct.mainImageUrl),
+        gallery: Array.isArray(dbProduct.gallery) ? (dbProduct.gallery as string[]).map((u) => getCleanImageUrl(u)) : [],
         weight: dbProduct.weight,
         active: dbProduct.active,
         flavors: dbProduct.flavors.map((f) => ({
           id: f.id,
           productId: f.productId,
           name: f.name,
-          imageUrl: f.imageUrl,
+          imageUrl: f.imageUrl ? getCleanImageUrl(f.imageUrl) : null,
           price: f.price,
           wholesalePrice: f.wholesalePrice,
           stock: f.stock,
@@ -162,10 +207,10 @@ export async function getProductBySlug(slug: string): Promise<ProductData | null
         })),
       };
     }
-    return null;
+    return mockProducts.find((p) => p.slug === slug) || null;
   } catch (err) {
-    console.error('Database query failed for slug:', err);
-    return null;
+    console.error('Database query failed for slug, using backup catalog:', err);
+    return mockProducts.find((p) => p.slug === slug) || null;
   }
 }
 

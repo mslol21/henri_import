@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { parseNumber } from '@/lib/utils';
+import { db, ensureNeonReady, isDatabaseConfigured } from '@/lib/db';
+import { mockProducts } from '@/lib/mockData';
+import { parseNumber, getCleanImageUrl } from '@/lib/utils';
 
 export async function GET() {
+  const getFallbackAdminProducts = () =>
+    mockProducts.map((p) => ({
+      ...p,
+      mainImageUrl: getCleanImageUrl(p.mainImageUrl),
+      category: { name: p.category?.name || 'Geral' },
+      flavors: (p.flavors || []).map((f) => ({
+        ...f,
+        imageUrl: f.imageUrl ? getCleanImageUrl(f.imageUrl) : null,
+      })),
+    }));
+
+  if (!isDatabaseConfigured) {
+    return NextResponse.json(getFallbackAdminProducts());
+  }
   try {
+    await ensureNeonReady();
     const products = await db.product.findMany({
       include: {
         category: { select: { name: true } },
@@ -12,10 +28,23 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(products);
+    if (products.length === 0) {
+      return NextResponse.json(getFallbackAdminProducts());
+    }
+
+    const cleaned = products.map((p) => ({
+      ...p,
+      mainImageUrl: getCleanImageUrl(p.mainImageUrl),
+      flavors: p.flavors.map((f) => ({
+        ...f,
+        imageUrl: f.imageUrl ? getCleanImageUrl(f.imageUrl) : null,
+      })),
+    }));
+
+    return NextResponse.json(cleaned);
   } catch (error) {
-    console.error('GET /api/admin/products error:', error);
-    return NextResponse.json({ error: 'Erro ao buscar produtos' }, { status: 500 });
+    console.error('GET /api/admin/products error, using backup products:', error);
+    return NextResponse.json(getFallbackAdminProducts());
   }
 }
 

@@ -1,6 +1,7 @@
 'use server';
 
-import { db } from '@/lib/db';
+import { db, ensureNeonReady, isDatabaseConfigured } from '@/lib/db';
+import { mockOrders } from '@/lib/mockData';
 import { OrderStatusType } from '@/types';
 import { CheckoutFormData } from '@/validators/schemas';
 
@@ -205,7 +206,30 @@ export async function createOrder(
 }
 
 export async function getOrders(statusFilter?: string) {
+  const getFallbackOrders = () => {
+    const list = statusFilter && statusFilter !== 'ALL'
+      ? mockOrders.filter((o) => o.status === statusFilter)
+      : mockOrders;
+    return list.map((o) => ({
+      ...o,
+      items: (o.items || []).map((i: any) => ({
+        id: i.id,
+        productId: i.productId,
+        flavorId: i.flavorId,
+        productName: i.productName || 'Produto',
+        flavorName: i.flavorName || null,
+        quantity: i.quantity,
+        price: i.price ?? i.priceAtPurchase ?? 0,
+      })),
+    }));
+  };
+
+  if (!isDatabaseConfigured) {
+    return getFallbackOrders();
+  }
+
   try {
+    await ensureNeonReady();
     let whereClause: any = {};
     if (statusFilter && statusFilter !== 'ALL') {
       whereClause.status = statusFilter;
@@ -235,6 +259,10 @@ export async function getOrders(statusFilter?: string) {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    if (orders.length === 0 && (!statusFilter || statusFilter === 'ALL')) {
+      return getFallbackOrders();
+    }
 
     return orders.map((o) => {
       const clientFallbackAddr = (o.client as any)?.addresses?.[0] || null;
@@ -297,8 +325,8 @@ export async function getOrders(statusFilter?: string) {
       };
     });
   } catch (err: any) {
-    console.error('Error fetching orders:', err);
-    return [];
+    console.error('Error fetching orders, using backup orders:', err);
+    return getFallbackOrders();
   }
 }
 
